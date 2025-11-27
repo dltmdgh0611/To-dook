@@ -3,7 +3,7 @@ import "./globals.css";
 import { Providers } from "./providers";
 
 export const metadata: Metadata = {
-  title: "OwnDesk",
+  title: "To-Dook",
   description: "할 일 관리와 AI 채팅",
 };
 
