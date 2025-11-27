@@ -1,5 +1,5 @@
 {
-  "name": "to-dook",
+  "name": "owndesk",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -15,6 +15,8 @@
     "@next-auth/supabase-adapter": "^0.2.1",
     "@prisma/client": "^5.22.0",
     "@supabase/supabase-js": "^2.84.0",
+    "@vercel/analytics": "^1.5.0",
+    "@vercel/speed-insights": "^1.2.0",
     "next": "16.0.3",
     "next-auth": "^4.24.13",
     "openai": "^6.9.1",
