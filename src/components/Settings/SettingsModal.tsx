@@ -445,7 +445,10 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                         </svg>
                       </div>
                       <div className="flex-1">
-                        <h3 className="font-medium text-gray-900 mb-1">Notion API 키 (직접 입력)</h3>
+                        <h3 className="font-medium text-gray-900 mb-1">
+                          Notion API 키 (직접 입력)
+                          <span className="ml-2 text-xs font-normal text-gray-400">(Optional)</span>
+                        </h3>
                         <p className="text-xs text-gray-500 mb-3">
                           Internal Integration의 API 키를 직접 입력할 수 있습니다.
                           <a 
