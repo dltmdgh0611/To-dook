@@ -60,22 +60,23 @@ model VerificationToken {
 }
 
 model Setting {
-  id              String   @id @default(cuid())
-  userId          String   @unique
-  gmailConnected  Boolean  @default(false)
-  gmailEmail      String?
-  gmailToken      String?  @db.Text
-  slackConnected  Boolean  @default(false)
-  slackWorkspace  String?
-  slackToken      String?  @db.Text
-  slackChannels   Json?    // 허용된 채널 목록: string[] (null = 전체)
-  notionConnected Boolean  @default(false)
-  notionWorkspace String?
-  notionToken     String?  @db.Text
-  notionApiKey    String?  @db.Text  // Integration API 키 직접 입력용
-  notionPages     Json?    // 허용된 페이지/DB ID 목록: string[] (null = 전체)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id                  String   @id @default(cuid())
+  userId              String   @unique
+  onboardingCompleted Boolean  @default(false)  // 온보딩 완료 여부
+  gmailConnected      Boolean  @default(false)
+  gmailEmail          String?
+  gmailToken          String?  @db.Text
+  slackConnected      Boolean  @default(false)
+  slackWorkspace      String?
+  slackToken          String?  @db.Text
+  slackChannels       Json?    // 허용된 채널 목록: string[] (null = 전체)
+  notionConnected     Boolean  @default(false)
+  notionWorkspace     String?
+  notionToken         String?  @db.Text
+  notionApiKey        String?  @db.Text  // Integration API 키 직접 입력용
+  notionPages         Json?    // 허용된 페이지/DB ID 목록: string[] (null = 전체)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }

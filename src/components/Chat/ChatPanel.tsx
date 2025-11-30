@@ -43,17 +43,22 @@ export default function ChatPanel() {
                 <div className="relative">
                     <textarea
                         rows={3}
-                        className="w-full resize-none rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20 transition-all"
-                        placeholder="메시지를 입력하세요..."
+                        className="w-full resize-none rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-400 placeholder:text-gray-400 cursor-not-allowed"
+                        placeholder="AI Chat은 아직 오픈 준비 중입니다"
                         value={inputValue}
                         onChange={(e) => setInputValue(e.target.value)}
+                        disabled
                     />
-                    <button className="absolute bottom-3 right-3 rounded-full bg-[var(--color-primary)] text-white p-2 shadow-md hover:bg-[var(--color-primary-hover)] hover:shadow-lg transition-all">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
+                    <button 
+                        className="absolute bottom-3 right-3 rounded-full bg-gray-300 text-white p-2 cursor-not-allowed"
+                        disabled
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M5.25 12h13.5m0 0l-5.25 5.25M18.75 12l-5.25-5.25" />
                         </svg>
                     </button>
                 </div>
+                <p className="text-xs text-gray-400 mt-2 text-center">채팅 기능은 곧 오픈될 예정입니다</p>
             </div>
         </div>
     );

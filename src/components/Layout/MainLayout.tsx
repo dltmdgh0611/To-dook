@@ -7,13 +7,6 @@ import TodoMain from '@/components/Todo/TodoMain';
 import ChatPanel from '@/components/Chat/ChatPanel';
 import SettingsModal from '@/components/Settings/SettingsModal';
 
-const dockPrimary: { label: string; icon: string }[] = [];
-
-const dockSecondary = [
-    { label: '검색', icon: '⌕' },
-    { label: '설정', icon: '⚙︎' },
-];
-
 export default function MainLayout() {
     const { data: session, status } = useSession();
     const router = useRouter();
@@ -24,6 +17,9 @@ export default function MainLayout() {
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const [generateTrigger, setGenerateTrigger] = useState(0);
     const [addTodoTrigger, setAddTodoTrigger] = useState(0);
+    // 온보딩 단계: 0 = 완료, 1 = 설정 안내, 2 = 새로고침 안내
+    const [onboardingStep, setOnboardingStep] = useState(0);
+    const [onboardingChecked, setOnboardingChecked] = useState(false);
 
     useEffect(() => {
         if (status === 'unauthenticated') {
@@ -39,6 +35,51 @@ export default function MainLayout() {
             router.replace('/', { scroll: false });
         }
     }, [searchParams, router]);
+
+    // Check onboarding status for new users
+    useEffect(() => {
+        const checkOnboarding = async () => {
+            if (status === 'authenticated' && !onboardingChecked) {
+                try {
+                    const response = await fetch('/api/onboarding');
+                    if (response.ok) {
+                        const data = await response.json();
+                        if (!data.onboardingCompleted) {
+                            setOnboardingStep(1); // 1단계부터 시작
+                        }
+                    }
+                } catch (error) {
+                    console.error('Failed to check onboarding status:', error);
+                } finally {
+                    setOnboardingChecked(true);
+                }
+            }
+        };
+        checkOnboarding();
+    }, [status, onboardingChecked]);
+
+    const handleNextOnboardingStep = async () => {
+        if (onboardingStep === 1) {
+            setOnboardingStep(2);
+        } else if (onboardingStep === 2) {
+            // 온보딩 완료 처리
+            try {
+                await fetch('/api/onboarding', { method: 'POST' });
+            } catch (error) {
+                console.error('Failed to complete onboarding:', error);
+            }
+            setOnboardingStep(0);
+        }
+    };
+
+    const handleSkipOnboarding = async () => {
+        try {
+            await fetch('/api/onboarding', { method: 'POST' });
+        } catch (error) {
+            console.error('Failed to complete onboarding:', error);
+        }
+        setOnboardingStep(0);
+    };
 
     const handleLogout = async () => {
         await signOut({ callbackUrl: '/landing' });
@@ -63,42 +104,93 @@ export default function MainLayout() {
 
     return (
         <div className="flex h-screen w-screen overflow-hidden bg-white text-gray-900">
-            <aside className="w-14 border-r border-gray-200 bg-[#faf8f3] flex flex-col items-center justify-between py-3">
+            {/* 온보딩 블러 오버레이 */}
+            {onboardingStep > 0 && (
+                <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[55]" />
+            )}
+
+            <aside className={`w-14 border-r border-gray-200 bg-[#faf8f3] flex flex-col items-center justify-between py-3 ${onboardingStep > 0 ? 'relative z-[60]' : ''}`}>
                 <div className="flex flex-col items-center gap-3">
-                    <button className="w-9 h-9 rounded-xl bg-gray-800 flex items-center justify-center text-white text-xs font-bold shadow-md hover:shadow-lg transition-shadow">
+                    <button className={`w-9 h-9 rounded-xl bg-gray-800 flex items-center justify-center text-white text-xs font-bold shadow-md transition-shadow ${onboardingStep === 0 ? 'hover:shadow-lg' : 'opacity-50 cursor-not-allowed'}`} disabled={onboardingStep > 0}>
                         O
                     </button>
                     <div className="w-6 h-px bg-gray-200" />
                     <button 
-                        onClick={() => setAddTodoTrigger(prev => prev + 1)}
-                        className="w-9 h-9 rounded-full bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] flex items-center justify-center text-white shadow-md hover:shadow-lg transition-all"
+                        onClick={() => onboardingStep === 0 && setAddTodoTrigger(prev => prev + 1)}
+                        className={`w-9 h-9 rounded-full bg-[var(--color-primary)] flex items-center justify-center text-white shadow-md transition-all ${onboardingStep === 0 ? 'hover:bg-[var(--color-primary-hover)] hover:shadow-lg' : 'opacity-50 cursor-not-allowed'}`}
                         title="새 할 일 추가"
+                        disabled={onboardingStep > 0}
                     >
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-4 h-4">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
                         </svg>
                     </button>
-                    <button 
-                        onClick={() => setGenerateTrigger(prev => prev + 1)}
-                        className="w-9 h-9 rounded-full border-2 border-[var(--color-primary)] hover:bg-[var(--color-primary)]/10 flex items-center justify-center transition-all"
-                        title="AI로 할 일 생성"
-                    >
-                        <svg 
-                            xmlns="http://www.w3.org/2000/svg" 
-                            fill="none" 
-                            viewBox="0 0 24 24" 
-                            strokeWidth={2.5} 
-                            stroke="currentColor" 
-                            className="w-4 h-4 text-[var(--color-primary)]"
+                    <div className="relative">
+                        <button 
+                            onClick={() => onboardingStep === 0 && setGenerateTrigger(prev => prev + 1)}
+                            className={`w-9 h-9 rounded-full border-2 border-[var(--color-primary)] flex items-center justify-center transition-all ${onboardingStep === 2 ? 'bg-white ring-4 ring-white/50 shadow-lg' : onboardingStep === 0 ? 'hover:bg-[var(--color-primary)]/10' : 'opacity-50 cursor-not-allowed'}`}
+                            title="AI로 할 일 생성"
+                            disabled={onboardingStep > 0 && onboardingStep !== 2}
                         >
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
-                        </svg>
-                    </button>
+                            <svg 
+                                xmlns="http://www.w3.org/2000/svg" 
+                                fill="none" 
+                                viewBox="0 0 24 24" 
+                                strokeWidth={2.5} 
+                                stroke="currentColor" 
+                                className="w-4 h-4 text-[var(--color-primary)]"
+                            >
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+                            </svg>
+                        </button>
+
+                        {/* 온보딩 Step 2: 새로고침 안내 툴팁 */}
+                        {onboardingStep === 2 && (
+                            <div className="absolute top-0 left-full ml-3 w-80 bg-[var(--color-primary)] rounded-xl shadow-2xl p-5 z-[70]">
+                                <div className="absolute left-0 top-4 -translate-x-2">
+                                    <div className="w-0 h-0 border-t-8 border-t-transparent border-b-8 border-b-transparent border-r-8 border-r-[var(--color-primary)]"></div>
+                                </div>
+                                <div className="flex items-start gap-3 mb-3">
+                                    <div className="w-9 h-9 rounded-lg bg-white/20 flex items-center justify-center flex-shrink-0">
+                                        <span className="text-xl">🔄</span>
+                                    </div>
+                                    <div>
+                                        <p className="font-semibold text-white text-base">AI로 할 일 생성하기</p>
+                                        <p className="text-xs text-white/70 mt-0.5">Step 2 of 2</p>
+                                    </div>
+                                </div>
+                                <p className="text-sm text-white/90 mb-4 leading-relaxed">
+                                    이 버튼을 클릭하면 연동된 Gmail, Slack, Notion에서 AI가 할 일을 자동으로 추출해요.
+                                </p>
+                                <div className="flex items-center gap-2 text-xs text-white bg-white/20 rounded-lg p-2.5 mb-5">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4 flex-shrink-0">
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+                                    </svg>
+                                    <span>계정을 먼저 연동해야 사용할 수 있어요!</span>
+                                </div>
+                                <div className="flex items-center justify-between">
+                                    <button 
+                                        onClick={handleSkipOnboarding}
+                                        className="text-xs text-white/70 hover:text-white transition-colors"
+                                    >
+                                        건너뛰기
+                                    </button>
+                                    <button 
+                                        onClick={handleNextOnboardingStep}
+                                        className="px-5 py-2 bg-white text-[var(--color-primary)] text-sm font-semibold rounded-lg hover:bg-gray-100 transition-colors"
+                                    >
+                                        확인
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+                    </div>
                 </div>
                 <div className="flex flex-col items-center gap-2 relative">
                     <button 
-                        onClick={() => setIsProfileOpen(!isProfileOpen)}
-                        className="w-8 h-8 rounded-full bg-[var(--color-primary)] flex items-center justify-center text-white text-xs font-semibold hover:shadow-lg transition-all overflow-hidden"
+                        onClick={() => onboardingStep === 0 && setIsProfileOpen(!isProfileOpen)}
+                        className={`w-8 h-8 rounded-full bg-[var(--color-primary)] flex items-center justify-center text-white text-xs font-semibold transition-all overflow-hidden ${onboardingStep === 1 ? 'ring-4 ring-white/50 shadow-lg' : onboardingStep === 0 ? 'hover:shadow-lg' : 'opacity-50 cursor-not-allowed'}`}
+                        disabled={onboardingStep > 0 && onboardingStep !== 1}
                     >
                         {userImage ? (
                             <img src={userImage} alt={userName} className="w-full h-full object-cover" />
@@ -106,6 +198,42 @@ export default function MainLayout() {
                             userInitial
                         )}
                     </button>
+
+                    {/* 온보딩 Step 1: 설정 안내 툴팁 */}
+                    {onboardingStep === 1 && (
+                        <div className="absolute bottom-0 left-full ml-3 w-80 bg-[var(--color-primary)] rounded-xl shadow-2xl p-5 z-[70]">
+                            <div className="absolute left-0 bottom-4 -translate-x-2">
+                                <div className="w-0 h-0 border-t-8 border-t-transparent border-b-8 border-b-transparent border-r-8 border-r-[var(--color-primary)]"></div>
+                            </div>
+                            <div className="flex items-start gap-3 mb-3">
+                                <div className="w-9 h-9 rounded-lg bg-white/20 flex items-center justify-center flex-shrink-0">
+                                    <span className="text-xl">⚙️</span>
+                                </div>
+                                <div>
+                                    <p className="font-semibold text-white text-base">설정에서 계정 연동하기</p>
+                                    <p className="text-xs text-white/70 mt-0.5">Step 1 of 2</p>
+                                </div>
+                            </div>
+                            <p className="text-sm text-white/90 mb-5 leading-relaxed">
+                                프로필을 클릭한 후 <strong className="text-white">&quot;설정&quot;</strong>에서 Gmail, Slack, Notion을 연동하세요. 
+                                연동하면 AI가 자동으로 할 일을 생성해드립니다.
+                            </p>
+                            <div className="flex items-center justify-between">
+                                <button 
+                                    onClick={handleSkipOnboarding}
+                                    className="text-xs text-white/70 hover:text-white transition-colors"
+                                >
+                                    건너뛰기
+                                </button>
+                                <button 
+                                    onClick={handleNextOnboardingStep}
+                                    className="px-5 py-2 bg-white text-[var(--color-primary)] text-sm font-semibold rounded-lg hover:bg-gray-100 transition-colors"
+                                >
+                                    확인
+                                </button>
+                            </div>
+                        </div>
+                    )}
                     
                     {isProfileOpen && (
                         <>

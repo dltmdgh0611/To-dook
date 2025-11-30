@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useSession, signOut } from 'next-auth/react';
+import GmailAuthGuideModal from './GmailAuthGuideModal';
 
 type SettingTab = 'integrations' | 'permissions' | 'account';
 
@@ -51,6 +52,9 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   // 노션 API 키 직접 입력
   const [notionApiKeyInput, setNotionApiKeyInput] = useState('');
   const [savingApiKey, setSavingApiKey] = useState(false);
+  
+  // Gmail 연동 안내 모달
+  const [showGmailGuide, setShowGmailGuide] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
@@ -341,7 +345,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                           </span>
                         )}
                         <button
-                          onClick={() => settings?.gmailConnected ? handleDisconnect('gmail') : handleConnect('gmail')}
+                          onClick={() => settings?.gmailConnected ? handleDisconnect('gmail') : setShowGmailGuide(true)}
                           disabled={loading}
                           className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                             settings?.gmailConnected
@@ -644,6 +648,16 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
           </div>
         </div>
       </div>
+
+      {/* Gmail 연동 안내 모달 */}
+      <GmailAuthGuideModal
+        isOpen={showGmailGuide}
+        onConfirm={() => {
+          setShowGmailGuide(false);
+          handleConnect('gmail');
+        }}
+        onCancel={() => setShowGmailGuide(false)}
+      />
     </>
   );
 }
