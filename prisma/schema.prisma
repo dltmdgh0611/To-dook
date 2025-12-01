@@ -40,6 +40,7 @@ model Session {
 model User {
   id            String    @id @default(cuid())
   name          String?
+  displayName   String?   // 사용자가 직접 입력한 이름
   email         String?   @unique
   emailVerified DateTime?
   image         String?
@@ -92,6 +93,7 @@ model Todo {
   tag         String?
   tagColor    String?
   sources     Json?     // 여러 소스 배열: [{type, id, link, title}]
+  order       Int       @default(0) // 드래그 앤 드롭 정렬 순서
   userId      String
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt

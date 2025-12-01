@@ -14,7 +14,10 @@ export async function GET() {
 
     const todos = await prisma.todo.findMany({
       where: { userId: session.user.id },
-      orderBy: { createdAt: 'desc' },
+      orderBy: [
+        { order: 'asc' },
+        { createdAt: 'desc' },
+      ],
     });
 
     return NextResponse.json({ todos });
@@ -36,6 +39,15 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { title, description, dueDate, priority, emoji, tag, tagColor, sources } = body;
 
+    // 현재 가장 작은 order 값 찾기 (새 투두를 맨 앞에 추가하기 위해)
+    const minOrderTodo = await prisma.todo.findFirst({
+      where: { userId: session.user.id },
+      orderBy: { order: 'asc' },
+      select: { order: true },
+    });
+    
+    const newOrder = minOrderTodo ? minOrderTodo.order - 1 : 0;
+
     // 빈 투두 생성 허용 (인라인 편집용)
     const todo = await prisma.todo.create({
       data: {
@@ -47,6 +59,7 @@ export async function POST(request: NextRequest) {
         tag,
         tagColor,
         sources: sources || null,
+        order: newOrder,
         userId: session.user.id,
       },
     });

@@ -5,6 +5,23 @@ import CardMain from '@/components/Card/CardMain';
 import AgentFeedback, { AgentStep } from '@/components/Todo/AgentFeedback';
 import TodoSkeleton from '@/components/Todo/TodoSkeleton';
 import DatePicker from '@/components/Todo/DatePicker';
+import {
+    DndContext,
+    closestCenter,
+    KeyboardSensor,
+    PointerSensor,
+    useSensor,
+    useSensors,
+    DragEndEvent,
+} from '@dnd-kit/core';
+import {
+    arrayMove,
+    SortableContext,
+    sortableKeyboardCoordinates,
+    useSortable,
+    verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 interface TodoMainProps {
     onToggleChat: () => void;
@@ -13,6 +30,8 @@ interface TodoMainProps {
     onViewChange: (view: 'todo' | 'card') => void;
     generateTrigger?: number;
     addTodoTrigger?: number;
+    displayName?: string;
+    onOpenSettings?: (tab?: 'integrations' | 'permissions' | 'account') => void;
 }
 
 type SourceInfo = {
@@ -33,7 +52,236 @@ type TodoItem = {
     tag?: string;
     tagColor?: string;
     sources?: SourceInfo[];
+    order?: number;
 };
+
+// SortableTodoItem 컴포넌트의 Props
+interface SortableTodoItemProps {
+    todo: TodoItem;
+    isCompleted: boolean;
+    isEditing: boolean;
+    editingTitle: string;
+    editingDueDate: string;
+    showDatePicker: boolean;
+    datePickerPosition?: { top: number; left: number };
+    onToggleComplete: (id: string) => void;
+    onStartEdit: (todo: TodoItem) => void;
+    onDelete: (id: string) => void;
+    onTitleChange: (value: string) => void;
+    onDueDateChange: (value: string) => void;
+    onSave: (id: string) => void;
+    onCancel: () => void;
+    onOpenDatePicker: (e: React.MouseEvent<HTMLButtonElement>) => void;
+    onCloseDatePicker: () => void;
+    titleInputRef: React.RefObject<HTMLInputElement | null>;
+    getSourceIcon: (type: string) => React.ReactNode;
+}
+
+// Sortable Todo Item 컴포넌트
+function SortableTodoItem({
+    todo,
+    isCompleted,
+    isEditing,
+    editingTitle,
+    editingDueDate,
+    showDatePicker,
+    datePickerPosition,
+    onToggleComplete,
+    onStartEdit,
+    onDelete,
+    onTitleChange,
+    onDueDateChange,
+    onSave,
+    onCancel,
+    onOpenDatePicker,
+    onCloseDatePicker,
+    titleInputRef,
+    getSourceIcon,
+}: SortableTodoItemProps) {
+    const {
+        attributes,
+        listeners,
+        setNodeRef,
+        transform,
+        transition,
+        isDragging,
+    } = useSortable({ id: todo.id });
+
+    const style = {
+        transform: CSS.Transform.toString(transform),
+        transition,
+        opacity: isDragging ? 0.5 : 1,
+        zIndex: isDragging ? 1000 : 'auto' as const,
+    };
+
+    return (
+        <div
+            ref={setNodeRef}
+            style={style}
+            className={`group flex items-start gap-3 border-b border-gray-200 bg-white py-3 transition-all hover:bg-gray-50 ${isCompleted ? 'opacity-60' : ''} ${isDragging ? 'shadow-lg rounded-lg' : ''}`}
+        >
+            {/* 드래그 핸들 */}
+            <button
+                {...attributes}
+                {...listeners}
+                className="mt-1 flex-shrink-0 cursor-grab active:cursor-grabbing p-1 -ml-1 rounded hover:bg-gray-100 opacity-0 group-hover:opacity-100 transition-opacity"
+                aria-label="드래그하여 순서 변경"
+            >
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4 text-gray-400">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 9h16.5m-16.5 6.75h16.5" />
+                </svg>
+            </button>
+
+            <button
+                onClick={() => !isEditing && onToggleComplete(todo.id)}
+                className="mt-0.5 flex-shrink-0"
+                disabled={isEditing}
+            >
+                <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${
+                    todo.completed
+                        ? 'bg-[var(--color-primary)] border-[var(--color-primary)]'
+                        : 'border-gray-300 hover:border-[var(--color-primary)]'
+                }`}>
+                    {todo.completed && (
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={3} stroke="white" className="w-3 h-3">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                        </svg>
+                    )}
+                </div>
+            </button>
+            <div className="flex-1 min-w-0">
+                {isEditing ? (
+                    <div className="space-y-2">
+                        <input
+                            ref={titleInputRef}
+                            type="text"
+                            value={editingTitle}
+                            onChange={(e) => onTitleChange(e.target.value)}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                    e.preventDefault();
+                                    onSave(todo.id);
+                                } else if (e.key === 'Escape') {
+                                    onCancel();
+                                }
+                            }}
+                            className="w-full px-2 py-1 text-[15px] font-medium border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:border-transparent"
+                            placeholder="할 일을 입력하세요"
+                            autoFocus
+                        />
+                        <div className="flex items-center gap-2">
+                            <button
+                                type="button"
+                                onClick={onOpenDatePicker}
+                                className="flex items-center gap-1.5 px-2 py-1 text-xs text-gray-500 border border-gray-300 rounded hover:bg-gray-50 transition-colors"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-3.5 h-3.5">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
+                                </svg>
+                                {editingDueDate || '날짜 선택'}
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => onSave(todo.id)}
+                                className="px-3 py-1 text-xs text-white bg-[var(--color-primary)] rounded hover:bg-[var(--color-primary-hover)] transition-colors"
+                            >
+                                저장
+                            </button>
+                            <button
+                                type="button"
+                                onClick={onCancel}
+                                className="px-3 py-1 text-xs text-gray-500 border border-gray-300 rounded hover:bg-gray-50 transition-colors"
+                            >
+                                취소
+                            </button>
+                        </div>
+                        {showDatePicker && (
+                            <DatePicker
+                                value={editingDueDate}
+                                onChange={(date) => {
+                                    onDueDateChange(date);
+                                    onCloseDatePicker();
+                                }}
+                                onClose={onCloseDatePicker}
+                                position={datePickerPosition}
+                            />
+                        )}
+                    </div>
+                ) : (
+                    <>
+                        <div className="flex items-start justify-between gap-2">
+                            <div className="flex-1">
+                                <p className={`text-[15px] font-medium transition-all ${
+                                    todo.completed
+                                        ? 'text-gray-400 line-through'
+                                        : 'text-gray-900'
+                                }`}>
+                                    {todo.emoji && <span className="mr-1.5">{todo.emoji}</span>}
+                                    {todo.title || '(제목 없음)'}
+                                </p>
+                            </div>
+                            <div className="flex items-center gap-1 flex-shrink-0">
+                                {todo.sources && todo.sources.length > 0 && (
+                                    <div className="flex items-center gap-1">
+                                        {todo.sources.slice(0, 3).map((source, idx) => (
+                                            <a
+                                                key={idx}
+                                                href={source.link}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="flex items-center gap-1 px-2 py-1 rounded-md bg-gray-100 hover:bg-gray-200 transition-colors text-xs text-gray-600"
+                                                onClick={(e) => e.stopPropagation()}
+                                                title={source.title || `${source.type}에서 열기`}
+                                            >
+                                                {getSourceIcon(source.type)}
+                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-3 h-3">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m13.35-.622l1.757-1.757a4.5 4.5 0 00-6.364-6.364l-4.5 4.5a4.5 4.5 0 001.242 7.244" />
+                                                </svg>
+                                            </a>
+                                        ))}
+                                        {todo.sources.length > 3 && (
+                                            <span className="text-xs text-gray-400">+{todo.sources.length - 3}</span>
+                                        )}
+                                    </div>
+                                )}
+                                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <button
+                                        onClick={() => onStartEdit(todo)}
+                                        className="p-1.5 rounded hover:bg-gray-200 transition-colors"
+                                        title="수정"
+                                    >
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4 text-gray-600">
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
+                                        </svg>
+                                    </button>
+                                    <button
+                                        onClick={() => onDelete(todo.id)}
+                                        className="p-1.5 rounded hover:bg-red-100 transition-colors"
+                                        title="삭제"
+                                    >
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4 text-red-500">
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        {todo.dueDate && (
+                            <div className="flex items-center gap-3 mt-2 text-xs">
+                                <span className={`flex items-center gap-1 ${todo.completed ? 'text-gray-400' : 'text-gray-500'}`}>
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-3.5 h-3.5">
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    {todo.dueDate}
+                                </span>
+                            </div>
+                        )}
+                    </>
+                )}
+            </div>
+        </div>
+    );
+}
 
 export default function TodoMain({ 
     onToggleChat, 
@@ -41,7 +289,9 @@ export default function TodoMain({
     currentView, 
     onViewChange,
     generateTrigger = 0,
-    addTodoTrigger = 0
+    addTodoTrigger = 0,
+    displayName,
+    onOpenSettings
 }: TodoMainProps) {
     const [todos, setTodos] = useState<TodoItem[]>([]);
     const [showCompleted, setShowCompleted] = useState(false);
@@ -51,6 +301,21 @@ export default function TodoMain({
     const [skeletonCount, setSkeletonCount] = useState(0);
     const lastTrigger = useRef(0);
     const lastAddTrigger = useRef(0);
+    
+    // 연동 상태
+    const [hasAnyIntegration, setHasAnyIntegration] = useState<boolean | null>(null);
+    
+    // DnD 센서 설정 (터치 및 마우스 지원)
+    const sensors = useSensors(
+        useSensor(PointerSensor, {
+            activationConstraint: {
+                distance: 8, // 8px 이상 움직여야 드래그 시작
+            },
+        }),
+        useSensor(KeyboardSensor, {
+            coordinateGetter: sortableKeyboardCoordinates,
+        })
+    );
     
     // 인라인 편집 상태
     const [editingTodoId, setEditingTodoId] = useState<string | null>(null);
@@ -80,6 +345,72 @@ export default function TodoMain({
     useEffect(() => {
         fetchTodos();
     }, [fetchTodos]);
+
+    // 연동 상태 확인
+    useEffect(() => {
+        const checkIntegrations = async () => {
+            try {
+                const res = await fetch('/api/settings');
+                if (res.ok) {
+                    const data = await res.json();
+                    const hasIntegration = data.gmailConnected || data.slackConnected || data.notionConnected || !!data.notionApiKey;
+                    setHasAnyIntegration(hasIntegration);
+                }
+            } catch (error) {
+                console.error('Failed to check integrations:', error);
+            }
+        };
+        checkIntegrations();
+    }, []);
+
+    // 드래그 종료 핸들러 - 낙관적 업데이트 + 백그라운드 저장
+    const handleDragEnd = useCallback(async (event: DragEndEvent) => {
+        const { active, over } = event;
+        
+        if (!over || active.id === over.id) {
+            return;
+        }
+
+        // 낙관적 업데이트 - UI 즉시 반영
+        setTodos((items) => {
+            const oldIndex = items.findIndex((item) => item.id === active.id);
+            const newIndex = items.findIndex((item) => item.id === over.id);
+            
+            if (oldIndex === -1 || newIndex === -1) return items;
+            
+            const newItems = arrayMove(items, oldIndex, newIndex);
+            
+            // 순서 업데이트된 아이템들의 order 값 재계산
+            return newItems.map((item, index) => ({
+                ...item,
+                order: index,
+            }));
+        });
+
+        // 백그라운드에서 서버에 저장 (렉 방지를 위해 비동기로 처리)
+        try {
+            const currentTodos = todos;
+            const oldIndex = currentTodos.findIndex((item) => item.id === active.id);
+            const newIndex = currentTodos.findIndex((item) => item.id === over.id);
+            
+            if (oldIndex === -1 || newIndex === -1) return;
+            
+            const reorderedTodos = arrayMove(currentTodos, oldIndex, newIndex);
+            const updates = reorderedTodos.map((item, index) => ({
+                id: item.id,
+                order: index,
+            }));
+
+            await fetch('/api/todos/reorder', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ updates }),
+            });
+        } catch (error) {
+            console.error('Failed to save order:', error);
+            // 실패해도 UI는 유지 (다음 새로고침 시 서버 데이터로 복구됨)
+        }
+    }, [todos]);
 
     // 투두 완료 토글
     const toggleComplete = async (todoId: string) => {
@@ -325,8 +656,16 @@ export default function TodoMain({
         }
     }, [addTodoTrigger]);
 
-    const activeTodos = todos.filter(todo => !todo.completed);
-    const completedTodos = todos.filter(todo => todo.completed);
+    // order 기준 정렬 (order가 없으면 createdAt 역순)
+    const sortedTodos = [...todos].sort((a, b) => {
+        if (a.order !== undefined && b.order !== undefined) {
+            return a.order - b.order;
+        }
+        return 0; // order가 없으면 기존 순서 유지
+    });
+    
+    const activeTodos = sortedTodos.filter(todo => !todo.completed);
+    const completedTodos = sortedTodos.filter(todo => todo.completed);
 
     const getSourceIcon = (type: string) => {
         switch (type) {
@@ -554,15 +893,10 @@ export default function TodoMain({
             <div className="flex-1 overflow-y-auto px-12 py-12 relative">
                 <div className="space-y-8 max-w-3xl mx-auto">
                     <div className="mb-8">
-                        <h1 className="text-5xl font-bold text-gray-900 mb-2">오늘</h1>
-                        <div className="flex items-center gap-3 mt-4">
-                            <button className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 transition-colors">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25H12" />
-                        </svg>
-                                <span>보기</span>
-                    </button>
-                </div>
+                        <h1 className="text-4xl font-bold text-gray-900 mb-2">
+                            안녕하세요, {displayName || '사용자'}님
+                        </h1>
+                        <p className="text-gray-500 text-sm">오늘도 좋은 하루 되세요!</p>
                     </div>
 
                     {currentView === 'todo' ? (
@@ -585,16 +919,88 @@ export default function TodoMain({
                                         <TodoSkeleton count={3} />
                                     )}
 
-                                    {/* 실제 투두 목록 */}
-                                    {!isLoading && activeTodos.map((todo) => renderTodoItem(todo))}
+                                    {/* 실제 투두 목록 - 드래그 앤 드롭 지원 */}
+                                    {!isLoading && activeTodos.length > 0 && (
+                                        <DndContext
+                                            sensors={sensors}
+                                            collisionDetection={closestCenter}
+                                            onDragEnd={handleDragEnd}
+                                        >
+                                            <SortableContext
+                                                items={activeTodos.map(t => t.id)}
+                                                strategy={verticalListSortingStrategy}
+                                            >
+                                                {activeTodos.map((todo) => (
+                                                    <SortableTodoItem
+                                                        key={todo.id}
+                                                        todo={todo}
+                                                        isCompleted={false}
+                                                        isEditing={editingTodoId === todo.id}
+                                                        editingTitle={editingTitle}
+                                                        editingDueDate={editingDueDate}
+                                                        showDatePicker={showDatePicker && editingTodoId === todo.id}
+                                                        datePickerPosition={datePickerPosition}
+                                                        onToggleComplete={toggleComplete}
+                                                        onStartEdit={startEdit}
+                                                        onDelete={deleteTodo}
+                                                        onTitleChange={setEditingTitle}
+                                                        onDueDateChange={setEditingDueDate}
+                                                        onSave={saveTodo}
+                                                        onCancel={cancelEdit}
+                                                        onOpenDatePicker={(e) => {
+                                                            e.stopPropagation();
+                                                            isClickingDatePicker.current = true;
+                                                            const rect = e.currentTarget.getBoundingClientRect();
+                                                            const pickerWidth = 280;
+                                                            const pickerHeight = 350;
+                                                            let top = rect.bottom + 8;
+                                                            let left = rect.left;
+                                                            if (left + pickerWidth > window.innerWidth) {
+                                                                left = window.innerWidth - pickerWidth - 16;
+                                                            }
+                                                            if (top + pickerHeight > window.innerHeight) {
+                                                                top = rect.top - pickerHeight - 8;
+                                                            }
+                                                            setDatePickerPosition({ top, left });
+                                                            setShowDatePicker(true);
+                                                        }}
+                                                        onCloseDatePicker={closeDatePicker}
+                                                        titleInputRef={titleInputRef}
+                                                        getSourceIcon={getSourceIcon}
+                                                    />
+                                                ))}
+                                            </SortableContext>
+                                        </DndContext>
+                                    )}
 
-                                    {/* 빈 상태 */}
-                                    {!isLoading && activeTodos.length === 0 && skeletonCount === 0 && (
+                                    {/* 빈 상태 - 연동 없을 때 */}
+                                    {!isLoading && activeTodos.length === 0 && skeletonCount === 0 && hasAnyIntegration === false && (
+                                        <div className="py-12 text-center">
+                                            <div className="w-20 h-20 rounded-2xl bg-[var(--color-primary)]/10 flex items-center justify-center mx-auto mb-5">
+                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-10 h-10 text-[var(--color-primary)]">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m13.35-.622l1.757-1.757a4.5 4.5 0 00-6.364-6.364l-4.5 4.5a4.5 4.5 0 001.242 7.244" />
+                                                </svg>
+                                            </div>
+                                            <h3 className="text-lg font-semibold text-gray-900 mb-2">서비스를 연동해보세요</h3>
+                                            <p className="text-sm text-gray-500 mb-6 max-w-xs mx-auto">
+                                                Gmail, Slack, Notion을 연동하면<br />AI가 자동으로 할 일을 생성해드려요.
+                                            </p>
+                                            <button
+                                                onClick={() => onOpenSettings?.('integrations')}
+                                                className="px-6 py-3 bg-[var(--color-primary)] text-white font-semibold rounded-xl hover:bg-[var(--color-primary-hover)] transition-all shadow-lg hover:shadow-xl hover:scale-105"
+                                            >
+                                                연동하기
+                                            </button>
+                                        </div>
+                                    )}
+
+                                    {/* 빈 상태 - 연동 있을 때 */}
+                                    {!isLoading && activeTodos.length === 0 && skeletonCount === 0 && hasAnyIntegration !== false && (
                                         <div className="py-8 text-center text-gray-400">
                                             <p className="text-sm">할 일이 없습니다.</p>
                                             <p className="text-xs mt-1">새로고침 버튼을 눌러 AI로 할 일을 생성해보세요.</p>
-                                                        </div>
-                                                    )}
+                                        </div>
+                                    )}
 
                                     <button 
                                         onClick={addNewTodo}

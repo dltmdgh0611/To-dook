@@ -33,11 +33,12 @@ interface NotionPage {
 interface SettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
+  initialTab?: SettingTab;
 }
 
-export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
+export default function SettingsModal({ isOpen, onClose, initialTab = 'integrations' }: SettingsModalProps) {
   const { data: session } = useSession();
-  const [activeTab, setActiveTab] = useState<SettingTab>('integrations');
+  const [activeTab, setActiveTab] = useState<SettingTab>(initialTab);
   const [settings, setSettings] = useState<SettingData | null>(null);
   const [loading, setLoading] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(false);
@@ -59,8 +60,9 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   useEffect(() => {
     if (isOpen) {
       fetchSettings();
+      setActiveTab(initialTab);
     }
-  }, [isOpen]);
+  }, [isOpen, initialTab]);
 
   useEffect(() => {
     if (activeTab === 'permissions' && settings) {

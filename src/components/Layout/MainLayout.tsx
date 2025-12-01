@@ -15,11 +15,58 @@ export default function MainLayout() {
     const [currentView, setCurrentView] = useState<'todo' | 'card'>('todo');
     const [isProfileOpen, setIsProfileOpen] = useState(false);
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+    const [settingsInitialTab, setSettingsInitialTab] = useState<'integrations' | 'permissions' | 'account'>('integrations');
     const [generateTrigger, setGenerateTrigger] = useState(0);
     const [addTodoTrigger, setAddTodoTrigger] = useState(0);
-    // 온보딩 단계: 0 = 완료, 1 = 설정 안내, 2 = 새로고침 안내
+    // 온보딩 단계: 0 = 완료, 1 = 이름 입력, 2 = 설정 안내, 3 = 새로고침 안내
     const [onboardingStep, setOnboardingStep] = useState(0);
     const [onboardingChecked, setOnboardingChecked] = useState(false);
+    const [displayName, setDisplayName] = useState('');
+    const [nameInput, setNameInput] = useState('');
+    
+    // 7일 무료체험 남은 일수 계산 (12월 9일까지)
+    const calculateDaysRemaining = () => {
+        const today = new Date();
+        const endDate = new Date('2025-12-07');
+        endDate.setHours(23, 59, 59, 999); // 하루 끝까지
+        
+        const diffTime = endDate.getTime() - today.getTime();
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        
+        return diffDays > 0 ? diffDays : 0;
+    };
+    
+    const [daysRemaining, setDaysRemaining] = useState(calculateDaysRemaining());
+    
+    // 날짜가 바뀔 때마다 남은 일수 업데이트
+    useEffect(() => {
+        const updateDaysRemaining = () => {
+            setDaysRemaining(calculateDaysRemaining());
+        };
+        
+        // 매일 자정에 업데이트
+        const now = new Date();
+        const tomorrow = new Date(now);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        tomorrow.setHours(0, 0, 0, 0);
+        
+        const msUntilMidnight = tomorrow.getTime() - now.getTime();
+        
+        let intervalId: NodeJS.Timeout | null = null;
+        
+        const timeoutId = setTimeout(() => {
+            updateDaysRemaining();
+            // 이후 매일 자정마다 업데이트
+            intervalId = setInterval(updateDaysRemaining, 24 * 60 * 60 * 1000);
+        }, msUntilMidnight);
+        
+        return () => {
+            clearTimeout(timeoutId);
+            if (intervalId) {
+                clearInterval(intervalId);
+            }
+        };
+    }, []);
 
     useEffect(() => {
         if (status === 'unauthenticated') {
@@ -44,8 +91,16 @@ export default function MainLayout() {
                     const response = await fetch('/api/onboarding');
                     if (response.ok) {
                         const data = await response.json();
+                        // displayName 설정
+                        if (data.displayName) {
+                            setDisplayName(data.displayName);
+                        } else if (data.name) {
+                            setDisplayName(data.name);
+                        }
+                        
                         if (!data.onboardingCompleted) {
-                            setOnboardingStep(1); // 1단계부터 시작
+                            // displayName이 없으면 1단계(이름 입력)부터 시작
+                            setOnboardingStep(data.displayName ? 2 : 1);
                         }
                     }
                 } catch (error) {
@@ -58,13 +113,36 @@ export default function MainLayout() {
         checkOnboarding();
     }, [status, onboardingChecked]);
 
+    const handleNameSubmit = async () => {
+        if (!nameInput.trim()) return;
+        
+        try {
+            const response = await fetch('/api/onboarding', {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ displayName: nameInput.trim() }),
+            });
+            
+            if (response.ok) {
+                setDisplayName(nameInput.trim());
+                setOnboardingStep(2); // 다음 단계로
+            }
+        } catch (error) {
+            console.error('Failed to save displayName:', error);
+        }
+    };
+
     const handleNextOnboardingStep = async () => {
-        if (onboardingStep === 1) {
-            setOnboardingStep(2);
-        } else if (onboardingStep === 2) {
+        if (onboardingStep === 2) {
+            setOnboardingStep(3);
+        } else if (onboardingStep === 3) {
             // 온보딩 완료 처리
             try {
-                await fetch('/api/onboarding', { method: 'POST' });
+                await fetch('/api/onboarding', { 
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({}),
+                });
             } catch (error) {
                 console.error('Failed to complete onboarding:', error);
             }
@@ -74,9 +152,16 @@ export default function MainLayout() {
 
     const handleSkipOnboarding = async () => {
         try {
-            await fetch('/api/onboarding', { method: 'POST' });
+            await fetch('/api/onboarding', { 
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ displayName: nameInput.trim() || undefined }),
+            });
         } catch (error) {
             console.error('Failed to complete onboarding:', error);
+        }
+        if (nameInput.trim()) {
+            setDisplayName(nameInput.trim());
         }
         setOnboardingStep(0);
     };
@@ -109,6 +194,58 @@ export default function MainLayout() {
                 <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[55]" />
             )}
 
+            {/* 온보딩 Step 1: 이름 입력 모달 */}
+            {onboardingStep === 1 && (
+                <div className="fixed inset-0 flex items-center justify-center z-[70]">
+                    <div className="bg-[var(--color-primary)] rounded-2xl shadow-2xl p-8 w-[400px] max-w-[90vw]">
+                        <div className="flex items-start gap-3 mb-6">
+                            <div className="w-9 h-9 rounded-lg bg-white/20 flex items-center justify-center flex-shrink-0">
+                                <span className="text-xl">👋</span>
+                            </div>
+                            <div>
+                                <p className="font-semibold text-white text-base">환영합니다!</p>
+                                <p className="text-xs text-white/70 mt-0.5">Step 1 of 3</p>
+                            </div>
+                        </div>
+                        <p className="text-sm text-white/90 mb-5 leading-relaxed">
+                            이름을 알려주시면 더 개인화된 경험을 제공해드릴게요.
+                        </p>
+                        
+                        <div className="mb-5">
+                            <input
+                                type="text"
+                                value={nameInput}
+                                onChange={(e) => setNameInput(e.target.value)}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter' && nameInput.trim()) {
+                                        handleNameSubmit();
+                                    }
+                                }}
+                                placeholder="이름을 입력해주세요"
+                                className="w-full px-4 py-3 text-base bg-white rounded-lg focus:outline-none focus:ring-2 focus:ring-white/50 transition-all placeholder:text-gray-400"
+                                autoFocus
+                            />
+                        </div>
+                        
+                        <div className="flex items-center justify-between">
+                            <button
+                                onClick={handleSkipOnboarding}
+                                className="text-xs text-white/70 hover:text-white transition-colors"
+                            >
+                                건너뛰기
+                            </button>
+                            <button
+                                onClick={handleNameSubmit}
+                                disabled={!nameInput.trim()}
+                                className="px-5 py-2 bg-white text-[var(--color-primary)] text-sm font-semibold rounded-lg hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                계속하기
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             <aside className={`w-14 border-r border-gray-200 bg-[#faf8f3] flex flex-col items-center justify-between py-3 ${onboardingStep > 0 ? 'relative z-[60]' : ''}`}>
                 <div className="flex flex-col items-center gap-3">
                     <button className={`w-9 h-9 rounded-xl bg-gray-800 flex items-center justify-center text-white text-xs font-bold shadow-md transition-shadow ${onboardingStep === 0 ? 'hover:shadow-lg' : 'opacity-50 cursor-not-allowed'}`} disabled={onboardingStep > 0}>
@@ -128,9 +265,9 @@ export default function MainLayout() {
                     <div className="relative">
                         <button 
                             onClick={() => onboardingStep === 0 && setGenerateTrigger(prev => prev + 1)}
-                            className={`w-9 h-9 rounded-full border-2 border-[var(--color-primary)] flex items-center justify-center transition-all ${onboardingStep === 2 ? 'bg-white ring-4 ring-white/50 shadow-lg' : onboardingStep === 0 ? 'hover:bg-[var(--color-primary)]/10' : 'opacity-50 cursor-not-allowed'}`}
+                            className={`w-9 h-9 rounded-full border-2 border-[var(--color-primary)] flex items-center justify-center transition-all ${onboardingStep === 3 ? 'bg-white ring-4 ring-white/50 shadow-lg' : onboardingStep === 0 ? 'hover:bg-[var(--color-primary)]/10' : 'opacity-50 cursor-not-allowed'}`}
                             title="AI로 할 일 생성"
-                            disabled={onboardingStep > 0 && onboardingStep !== 2}
+                            disabled={onboardingStep > 0 && onboardingStep !== 3}
                         >
                             <svg 
                                 xmlns="http://www.w3.org/2000/svg" 
@@ -144,8 +281,8 @@ export default function MainLayout() {
                             </svg>
                         </button>
 
-                        {/* 온보딩 Step 2: 새로고침 안내 툴팁 */}
-                        {onboardingStep === 2 && (
+                        {/* 온보딩 Step 3: 새로고침 안내 툴팁 */}
+                        {onboardingStep === 3 && (
                             <div className="absolute top-0 left-full ml-3 w-80 bg-[var(--color-primary)] rounded-xl shadow-2xl p-5 z-[70]">
                                 <div className="absolute left-0 top-4 -translate-x-2">
                                     <div className="w-0 h-0 border-t-8 border-t-transparent border-b-8 border-b-transparent border-r-8 border-r-[var(--color-primary)]"></div>
@@ -156,7 +293,7 @@ export default function MainLayout() {
                                     </div>
                                     <div>
                                         <p className="font-semibold text-white text-base">AI로 할 일 생성하기</p>
-                                        <p className="text-xs text-white/70 mt-0.5">Step 2 of 2</p>
+                                        <p className="text-xs text-white/70 mt-0.5">Step 3 of 3</p>
                                     </div>
                                 </div>
                                 <p className="text-sm text-white/90 mb-4 leading-relaxed">
@@ -189,8 +326,8 @@ export default function MainLayout() {
                 <div className="flex flex-col items-center gap-2 relative">
                     <button 
                         onClick={() => onboardingStep === 0 && setIsProfileOpen(!isProfileOpen)}
-                        className={`w-8 h-8 rounded-full bg-[var(--color-primary)] flex items-center justify-center text-white text-xs font-semibold transition-all overflow-hidden ${onboardingStep === 1 ? 'ring-4 ring-white/50 shadow-lg' : onboardingStep === 0 ? 'hover:shadow-lg' : 'opacity-50 cursor-not-allowed'}`}
-                        disabled={onboardingStep > 0 && onboardingStep !== 1}
+                        className={`w-8 h-8 rounded-full bg-[var(--color-primary)] flex items-center justify-center text-white text-xs font-semibold transition-all overflow-hidden ${onboardingStep === 2 ? 'ring-4 ring-white/50 shadow-lg' : onboardingStep === 0 ? 'hover:shadow-lg' : 'opacity-50 cursor-not-allowed'}`}
+                        disabled={onboardingStep > 0 && onboardingStep !== 2}
                     >
                         {userImage ? (
                             <img src={userImage} alt={userName} className="w-full h-full object-cover" />
@@ -199,8 +336,8 @@ export default function MainLayout() {
                         )}
                     </button>
 
-                    {/* 온보딩 Step 1: 설정 안내 툴팁 */}
-                    {onboardingStep === 1 && (
+                    {/* 온보딩 Step 2: 설정 안내 툴팁 */}
+                    {onboardingStep === 2 && (
                         <div className="absolute bottom-0 left-full ml-3 w-80 bg-[var(--color-primary)] rounded-xl shadow-2xl p-5 z-[70]">
                             <div className="absolute left-0 bottom-4 -translate-x-2">
                                 <div className="w-0 h-0 border-t-8 border-t-transparent border-b-8 border-b-transparent border-r-8 border-r-[var(--color-primary)]"></div>
@@ -211,7 +348,7 @@ export default function MainLayout() {
                                 </div>
                                 <div>
                                     <p className="font-semibold text-white text-base">설정에서 계정 연동하기</p>
-                                    <p className="text-xs text-white/70 mt-0.5">Step 1 of 2</p>
+                                    <p className="text-xs text-white/70 mt-0.5">Step 2 of 3</p>
                                 </div>
                             </div>
                             <p className="text-sm text-white/90 mb-5 leading-relaxed">
@@ -293,6 +430,11 @@ export default function MainLayout() {
                         onViewChange={setCurrentView}
                         generateTrigger={generateTrigger}
                         addTodoTrigger={addTodoTrigger}
+                        displayName={displayName}
+                        onOpenSettings={(tab) => {
+                            setSettingsInitialTab(tab || 'integrations');
+                            setIsSettingsOpen(true);
+                        }}
                     />
                 </main>
 
@@ -305,10 +447,25 @@ export default function MainLayout() {
                 </aside>
             </div>
 
+            {/* 7일 무료체험 배너 - 왼쪽 아래 사이드바 옆 */}
+            {onboardingStep === 0 && daysRemaining > 0 && (
+                <div className="fixed bottom-4 left-[72px] z-40 animate-fadeIn">
+                    <div className="bg-[var(--color-primary)] text-white px-4 py-2.5 rounded-full shadow-lg flex items-center gap-3">
+                        <div className="flex items-center gap-2">
+                            <span className="text-lg">✨</span>
+                            <span className="text-sm font-medium">7일 무료체험 중</span>
+                        </div>
+                        <div className="w-px h-4 bg-white/30" />
+                        <span className="text-xs text-white/80">남은 기간: {daysRemaining}일</span>
+                    </div>
+                </div>
+            )}
+
             {/* Settings Modal */}
             <SettingsModal 
                 isOpen={isSettingsOpen} 
-                onClose={() => setIsSettingsOpen(false)} 
+                onClose={() => setIsSettingsOpen(false)}
+                initialTab={settingsInitialTab}
             />
         </div>
     );
