@@ -89,7 +89,16 @@ export default function LandingPage() {
                             {/* 태블릿 베젤 (검은색 테두리) */}
                             <div className="bg-[var(--color-primary)] rounded-[2.5rem] p-3 relative z-10">
                                 {/* 태블릿 화면 */}
-                                <div className="bg-white rounded-[2rem] overflow-hidden aspect-[4/3] relative">
+                                <div className="bg-white rounded-[2rem] overflow-hidden aspect-[16/10] relative">
+                                    <video
+                                        autoPlay
+                                        loop
+                                        muted
+                                        playsInline
+                                        className="w-full h-full object-cover"
+                                    >
+                                        <source src="/siyeon.mp4" type="video/mp4" />
+                                    </video>
                                 </div>
                             </div>
                         </div>
