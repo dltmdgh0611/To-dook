@@ -1,33 +1,43 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { getTranslation } from '@/lib/i18n';
 
-const recentThreads = [
-    { title: 'Ownbrief AI 환영 이메일 요약' },
-    { title: '어제 작업 정리' },
-    { title: '프로젝트 제안서 검토' },
-];
+const recentThreads = {
+    ko: [
+        { title: 'Ownbrief AI 환영 이메일 요약' },
+        { title: '어제 작업 정리' },
+        { title: '프로젝트 제안서 검토' },
+    ],
+    en: [
+        { title: 'Ownbrief AI Welcome Email Summary' },
+        { title: 'Yesterday\'s Work Summary' },
+        { title: 'Project Proposal Review' },
+    ],
+};
 
 export default function ChatPanel() {
+    const { language } = useLanguage();
     const [inputValue, setInputValue] = useState('');
 
     return (
         <div className="flex h-full flex-col bg-[#faf8f3] text-gray-900">
             <div className="border-b border-gray-200 px-5 py-6 space-y-3">
                 <div className="flex items-center justify-between">
-                    <span className="text-sm font-semibold">To-dook chating</span>
+                    <span className="text-sm font-semibold">{getTranslation(language, 'chatTitle')}</span>
                 </div>
                 <div>
-                    <p className="text-2xl font-semibold text-gray-900">안녕하세요!</p>
-                    <p className="text-sm text-gray-500 mt-1">다음 작업을 알려주시면 제가 처리해드릴게요.</p>
+                    <p className="text-2xl font-semibold text-gray-900">{getTranslation(language, 'chatGreeting')}</p>
+                    <p className="text-sm text-gray-500 mt-1">{getTranslation(language, 'chatSubtitle')}</p>
                 </div>
             </div>
 
             <div className="flex-1 overflow-y-auto px-5 py-6 space-y-4">
                 <section className="space-y-3">
-                    <p className="text-xs uppercase tracking-[0.3em] text-gray-500 font-semibold">example</p>
+                    <p className="text-xs uppercase tracking-[0.3em] text-gray-500 font-semibold">{getTranslation(language, 'chatExample')}</p>
                 <div className="space-y-2">
-                        {recentThreads.map((thread) => (
+                        {recentThreads[language].map((thread) => (
                             <button
                                 key={thread.title}
                                 className="w-full rounded-xl bg-white border border-gray-200 px-4 py-3 text-left text-sm text-gray-700 hover:bg-gray-50 hover:border-gray-300 transition-colors"
@@ -44,7 +54,7 @@ export default function ChatPanel() {
                     <textarea
                         rows={3}
                         className="w-full resize-none rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-400 placeholder:text-gray-400 cursor-not-allowed"
-                        placeholder="AI Chat은 아직 오픈 준비 중입니다"
+                        placeholder={getTranslation(language, 'chatPlaceholder')}
                         value={inputValue}
                         onChange={(e) => setInputValue(e.target.value)}
                         disabled
@@ -58,7 +68,7 @@ export default function ChatPanel() {
                         </svg>
                     </button>
                 </div>
-                <p className="text-xs text-gray-400 mt-2 text-center">채팅 기능은 곧 오픈될 예정입니다</p>
+                <p className="text-xs text-gray-400 mt-2 text-center">{getTranslation(language, 'chatComingSoon')}</p>
             </div>
         </div>
     );

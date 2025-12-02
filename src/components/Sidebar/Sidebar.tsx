@@ -3,10 +3,13 @@
 import React, { useState } from 'react';
 import TodoList from './TodoList';
 import styles from './Sidebar.module.css';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { getTranslation } from '@/lib/i18n';
 
 type ViewMode = 'todo' | 'card';
 
 export default function Sidebar() {
+    const { language } = useLanguage();
     const [viewMode, setViewMode] = useState<ViewMode>('todo');
 
     return (
@@ -17,13 +20,13 @@ export default function Sidebar() {
                         className={`${styles.toggleButton} ${viewMode === 'todo' ? styles.active : ''}`}
                         onClick={() => setViewMode('todo')}
                     >
-                        To-do
+                        {getTranslation(language, 'todo')}
                     </button>
                     <button
                         className={`${styles.toggleButton} ${viewMode === 'card' ? styles.active : ''}`}
                         onClick={() => setViewMode('card')}
                     >
-                        Card
+                        {getTranslation(language, 'card')}
                     </button>
                 </div>
             </div>
@@ -33,7 +36,7 @@ export default function Sidebar() {
                     <TodoList />
                 ) : (
                     <div className={styles.placeholder}>
-                        Card View (Coming Soon)
+                        {getTranslation(language, 'cardViewComingSoon')}
                     </div>
                 )}
             </div>

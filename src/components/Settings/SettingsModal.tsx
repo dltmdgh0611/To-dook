@@ -3,8 +3,10 @@
 import React, { useState, useEffect } from 'react';
 import { useSession, signOut } from 'next-auth/react';
 import GmailAuthGuideModal from './GmailAuthGuideModal';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { getTranslation } from '@/lib/i18n';
 
-type SettingTab = 'integrations' | 'permissions' | 'account';
+type SettingTab = 'general' | 'integrations' | 'permissions' | 'account';
 
 interface SettingData {
   gmailConnected: boolean;
@@ -38,6 +40,7 @@ interface SettingsModalProps {
 
 export default function SettingsModal({ isOpen, onClose, initialTab = 'integrations' }: SettingsModalProps) {
   const { data: session } = useSession();
+  const { language, setLanguage } = useLanguage();
   const [activeTab, setActiveTab] = useState<SettingTab>(initialTab);
   const [settings, setSettings] = useState<SettingData | null>(null);
   const [loading, setLoading] = useState(false);
@@ -161,14 +164,14 @@ export default function SettingsModal({ isOpen, onClose, initialTab = 'integrati
       if (response.ok) {
         await fetchSettings();
         setNotionApiKeyInput('••••••••••••••••');
-        alert('노션 API 키가 저장되었습니다.');
+        alert(getTranslation(language, 'apiKeySaved'));
       } else {
         const error = await response.json();
-        alert(error.message || 'API 키 저장에 실패했습니다.');
+        alert(error.message || getTranslation(language, 'permissionsSaveFailed'));
       }
     } catch (error) {
       console.error('Failed to save Notion API key:', error);
-      alert('API 키 저장 중 오류가 발생했습니다.');
+      alert(getTranslation(language, 'permissionsSaveFailed'));
     } finally {
       setSavingApiKey(false);
     }
@@ -188,11 +191,11 @@ export default function SettingsModal({ isOpen, onClose, initialTab = 'integrati
       
       if (response.ok) {
         await fetchSettings();
-        alert('권한 설정이 저장되었습니다.');
+        alert(getTranslation(language, 'permissionsSaved'));
       }
     } catch (error) {
       console.error('Failed to save permissions:', error);
-      alert('권한 설정 저장에 실패했습니다.');
+      alert(getTranslation(language, 'permissionsSaveFailed'));
     } finally {
       setLoading(false);
     }
@@ -238,7 +241,7 @@ export default function SettingsModal({ isOpen, onClose, initialTab = 'integrati
 
   if (!isOpen) return null;
 
-  const userName = session?.user?.name || '사용자';
+  const userName = session?.user?.name || getTranslation(language, 'user');
   const userEmail = session?.user?.email || '';
 
   return (
@@ -269,6 +272,16 @@ export default function SettingsModal({ isOpen, onClose, initialTab = 'integrati
             {/* Navigation */}
             <nav className="flex-1 px-3">
               <button
+                onClick={() => setActiveTab('general')}
+                className={`w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                  activeTab === 'general' 
+                    ? 'bg-white text-gray-900 shadow-sm' 
+                    : 'text-gray-600 hover:bg-white/50'
+                }`}
+              >
+                {getTranslation(language, 'general')}
+              </button>
+              <button
                 onClick={() => setActiveTab('integrations')}
                 className={`w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
                   activeTab === 'integrations' 
@@ -276,7 +289,7 @@ export default function SettingsModal({ isOpen, onClose, initialTab = 'integrati
                     : 'text-gray-600 hover:bg-white/50'
                 }`}
               >
-                연결 정보
+                {getTranslation(language, 'connections')}
               </button>
               <button
                 onClick={() => setActiveTab('permissions')}
@@ -286,7 +299,7 @@ export default function SettingsModal({ isOpen, onClose, initialTab = 'integrati
                     : 'text-gray-600 hover:bg-white/50'
                 }`}
               >
-                권한 설정
+                {getTranslation(language, 'permissions')}
               </button>
               <button
                 onClick={() => setActiveTab('account')}
@@ -296,7 +309,7 @@ export default function SettingsModal({ isOpen, onClose, initialTab = 'integrati
                     : 'text-gray-600 hover:bg-white/50'
                 }`}
               >
-                계정
+                {getTranslation(language, 'account')}
               </button>
             </nav>
           </div>
@@ -313,10 +326,47 @@ export default function SettingsModal({ isOpen, onClose, initialTab = 'integrati
               </svg>
             </button>
 
+            {activeTab === 'general' && (
+              <div>
+                <h2 className="text-xl font-semibold text-gray-900 mb-2">{getTranslation(language, 'general')}</h2>
+                <p className="text-sm text-gray-500 mb-8">{getTranslation(language, 'generalDesc')}</p>
+
+                <div className="space-y-4">
+                  {/* Language Selection */}
+                  <div className="border border-gray-200 rounded-xl p-4">
+                    <h3 className="font-medium text-gray-900 mb-1">{getTranslation(language, 'language')}</h3>
+                    <p className="text-xs text-gray-500 mb-4">{getTranslation(language, 'languageDesc')}</p>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => setLanguage('ko')}
+                        className={`flex-1 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                          language === 'ko'
+                            ? 'bg-[var(--color-primary)] text-white'
+                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        }`}
+                      >
+                        {getTranslation(language, 'korean')}
+                      </button>
+                      <button
+                        onClick={() => setLanguage('en')}
+                        className={`flex-1 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                          language === 'en'
+                            ? 'bg-[var(--color-primary)] text-white'
+                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        }`}
+                      >
+                        {getTranslation(language, 'english')}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {activeTab === 'integrations' && (
               <div>
-                <h2 className="text-xl font-semibold text-gray-900 mb-2">연결 정보</h2>
-                <p className="text-sm text-gray-500 mb-8">외부 서비스와 연결하여 더 많은 기능을 사용하세요.</p>
+                <h2 className="text-xl font-semibold text-gray-900 mb-2">{getTranslation(language, 'connections')}</h2>
+                <p className="text-sm text-gray-500 mb-8">{getTranslation(language, 'connectionsDesc')}</p>
 
                 <div className="space-y-4">
                   {/* Gmail */}
@@ -332,18 +382,18 @@ export default function SettingsModal({ isOpen, onClose, initialTab = 'integrati
                           </svg>
                         </div>
                         <div>
-                          <h3 className="font-medium text-gray-900">Gmail</h3>
+                          <h3 className="font-medium text-gray-900">{getTranslation(language, 'gmail')}</h3>
                           <p className="text-xs text-gray-500">
                             {settings?.gmailConnected 
-                              ? settings.gmailEmail || '연결됨'
-                              : '이메일을 연동하여 일정 관리하기'}
+                              ? settings.gmailEmail || getTranslation(language, 'gmailConnected')
+                              : getTranslation(language, 'gmailDesc')}
                           </p>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
                         {settings?.gmailConnected && (
                           <span className="text-xs px-2 py-1 bg-[#e8f5e9] text-[#4caf50] rounded-full font-medium">
-                            연결됨
+                            {getTranslation(language, 'gmailConnected')}
                           </span>
                         )}
                         <button
@@ -355,7 +405,7 @@ export default function SettingsModal({ isOpen, onClose, initialTab = 'integrati
                               : 'bg-[var(--color-primary)] text-white hover:bg-[var(--color-primary-hover)]'
                           }`}
                         >
-                          {settings?.gmailConnected ? '연결 해제' : '연결하기'}
+                          {settings?.gmailConnected ? getTranslation(language, 'disconnect') : getTranslation(language, 'connect')}
                         </button>
                       </div>
                     </div>
@@ -374,18 +424,18 @@ export default function SettingsModal({ isOpen, onClose, initialTab = 'integrati
                           </svg>
                         </div>
                         <div>
-                          <h3 className="font-medium text-gray-900">Slack</h3>
+                          <h3 className="font-medium text-gray-900">{getTranslation(language, 'slack')}</h3>
                           <p className="text-xs text-gray-500">
                             {settings?.slackConnected 
-                              ? settings.slackWorkspace || '연결됨'
-                              : 'Slack과 연동하여 알림 받기'}
+                              ? settings.slackWorkspace || getTranslation(language, 'gmailConnected')
+                              : getTranslation(language, 'slackDesc')}
                           </p>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
                         {settings?.slackConnected && (
                           <span className="text-xs px-2 py-1 bg-[#e8f5e9] text-[#4caf50] rounded-full font-medium">
-                            연결됨
+                            {getTranslation(language, 'gmailConnected')}
                           </span>
                         )}
                         <button
@@ -397,7 +447,7 @@ export default function SettingsModal({ isOpen, onClose, initialTab = 'integrati
                               : 'bg-[var(--color-primary)] text-white hover:bg-[var(--color-primary-hover)]'
                           }`}
                         >
-                          {settings?.slackConnected ? '연결 해제' : '연결하기'}
+                          {settings?.slackConnected ? getTranslation(language, 'disconnect') : getTranslation(language, 'connect')}
                         </button>
                       </div>
                     </div>
@@ -413,18 +463,18 @@ export default function SettingsModal({ isOpen, onClose, initialTab = 'integrati
                           </svg>
                         </div>
                         <div>
-                          <h3 className="font-medium text-gray-900">Notion (OAuth)</h3>
+                          <h3 className="font-medium text-gray-900">{getTranslation(language, 'notionOAuth')}</h3>
                           <p className="text-xs text-gray-500">
                             {settings?.notionConnected 
-                              ? settings.notionWorkspace || '연결됨'
-                              : 'Notion과 연동하여 데이터 동기화'}
+                              ? settings.notionWorkspace || getTranslation(language, 'gmailConnected')
+                              : getTranslation(language, 'notionDesc')}
                           </p>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
                         {settings?.notionConnected && (
                           <span className="text-xs px-2 py-1 bg-[#e8f5e9] text-[#4caf50] rounded-full font-medium">
-                            연결됨
+                            {getTranslation(language, 'gmailConnected')}
                           </span>
                         )}
                         <button
@@ -436,7 +486,7 @@ export default function SettingsModal({ isOpen, onClose, initialTab = 'integrati
                               : 'bg-[var(--color-primary)] text-white hover:bg-[var(--color-primary-hover)]'
                           }`}
                         >
-                          {settings?.notionConnected ? '연결 해제' : '연결하기'}
+                          {settings?.notionConnected ? getTranslation(language, 'disconnect') : getTranslation(language, 'connect')}
                         </button>
                       </div>
                     </div>
@@ -452,18 +502,18 @@ export default function SettingsModal({ isOpen, onClose, initialTab = 'integrati
                       </div>
                       <div className="flex-1">
                         <h3 className="font-medium text-gray-900 mb-1">
-                          Notion API 키 (직접 입력)
+                          {getTranslation(language, 'notionApiKey')}
                           <span className="ml-2 text-xs font-normal text-gray-400">(Optional)</span>
                         </h3>
                         <p className="text-xs text-gray-500 mb-3">
-                          Internal Integration의 API 키를 직접 입력할 수 있습니다.
+                          {getTranslation(language, 'notionApiKeyDesc')}
                           <a 
                             href="https://www.notion.so/my-integrations" 
                             target="_blank" 
                             rel="noopener noreferrer"
                             className="text-blue-500 hover:underline ml-1"
                           >
-                            Integration 만들기 →
+                            {getTranslation(language, 'createIntegration')}
                           </a>
                         </p>
                         <div className="flex gap-2">
@@ -476,7 +526,7 @@ export default function SettingsModal({ isOpen, onClose, initialTab = 'integrati
                                 setNotionApiKeyInput('');
                               }
                             }}
-                            placeholder="secret_xxxxxxxxxxxxx"
+                            placeholder={getTranslation(language, 'apiKeyPlaceholder')}
                             className="flex-1 px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-200"
                           />
                           <button
@@ -484,11 +534,11 @@ export default function SettingsModal({ isOpen, onClose, initialTab = 'integrati
                             disabled={savingApiKey || !notionApiKeyInput || notionApiKeyInput === '••••••••••••••••'}
                             className="px-4 py-2 bg-[var(--color-primary)] text-white rounded-lg text-sm font-medium hover:bg-[var(--color-primary-hover)] disabled:opacity-50 disabled:cursor-not-allowed"
                           >
-                            {savingApiKey ? '저장 중...' : '저장'}
+                            {savingApiKey ? getTranslation(language, 'saving') : getTranslation(language, 'save')}
                           </button>
                         </div>
                         {settings?.notionApiKey && (
-                          <p className="text-xs text-green-600 mt-2">✓ API 키가 설정되어 있습니다.</p>
+                          <p className="text-xs text-green-600 mt-2">{getTranslation(language, 'apiKeySaved')}</p>
                         )}
                       </div>
                     </div>
@@ -499,9 +549,9 @@ export default function SettingsModal({ isOpen, onClose, initialTab = 'integrati
 
             {activeTab === 'permissions' && (
               <div>
-                <h2 className="text-xl font-semibold text-gray-900 mb-2">권한 설정</h2>
+                <h2 className="text-xl font-semibold text-gray-900 mb-2">{getTranslation(language, 'permissions')}</h2>
                 <p className="text-sm text-gray-500 mb-8">
-                  AI가 데이터를 가져올 채널과 페이지를 선택하세요. 선택하지 않으면 모든 데이터를 가져옵니다.
+                  {getTranslation(language, 'permissionsDesc')}
                 </p>
 
                 {loadingPermissions ? (
@@ -517,14 +567,16 @@ export default function SettingsModal({ isOpen, onClose, initialTab = 'integrati
                           <svg viewBox="0 0 24 24" className="w-5 h-5">
                             <path fill="#E01E5A" d="M5.042 15.165a2.528 2.528 0 0 1-2.52 2.523A2.528 2.528 0 0 1 0 15.165a2.527 2.527 0 0 1 2.522-2.52h2.52v2.52z"/>
                           </svg>
-                          Slack 채널
+                          {getTranslation(language, 'slackChannels')}
                         </h3>
                         <p className="text-xs text-gray-500 mb-3">
-                          선택된 채널: {selectedSlackChannels.length === 0 ? '전체' : `${selectedSlackChannels.length}개`}
+                          {selectedSlackChannels.length === 0 
+                            ? getTranslation(language, 'selectedChannelsAll')
+                            : getTranslation(language, 'selectedChannels', { count: `${selectedSlackChannels.length}` })}
                         </p>
                         
                         {slackChannelList.length === 0 ? (
-                          <p className="text-sm text-gray-400">채널 목록을 불러올 수 없습니다.</p>
+                          <p className="text-sm text-gray-400">{getTranslation(language, 'cannotLoadPages')}</p>
                         ) : (
                           <div className="max-h-48 overflow-y-auto space-y-2">
                             {slackChannelList.map(channel => (
@@ -555,14 +607,16 @@ export default function SettingsModal({ isOpen, onClose, initialTab = 'integrati
                           <svg viewBox="0 0 24 24" className="w-5 h-5">
                             <path fill="currentColor" d="M4.459 4.208c.746.606 1.026.56 2.428.466l13.215-.793c.28 0 .047-.28-.046-.326L17.86 1.968c-.42-.326-.981-.7-2.055-.607L3.01 2.295c-.466.046-.56.28-.373.466z"/>
                           </svg>
-                          Notion 페이지/데이터베이스
+                          {getTranslation(language, 'notionPages')}
                         </h3>
                         <p className="text-xs text-gray-500 mb-3">
-                          선택된 페이지: {selectedNotionPages.length === 0 ? '전체' : `${selectedNotionPages.length}개`}
+                          {selectedNotionPages.length === 0 
+                            ? getTranslation(language, 'selectedPagesAll')
+                            : getTranslation(language, 'selectedPages', { count: `${selectedNotionPages.length}` })}
                         </p>
                         
                         {notionPageList.length === 0 ? (
-                          <p className="text-sm text-gray-400">페이지 목록을 불러올 수 없습니다. Integration에 페이지를 공유했는지 확인하세요.</p>
+                          <p className="text-sm text-gray-400">{getTranslation(language, 'cannotLoadPages')}</p>
                         ) : (
                           <div className="max-h-48 overflow-y-auto space-y-2">
                             {notionPageList.map(page => (
@@ -592,7 +646,7 @@ export default function SettingsModal({ isOpen, onClose, initialTab = 'integrati
                       disabled={loading}
                       className="w-full py-3 bg-[var(--color-primary)] text-white rounded-lg text-sm font-medium hover:bg-[var(--color-primary-hover)] disabled:opacity-50"
                     >
-                      {loading ? '저장 중...' : '권한 설정 저장'}
+                      {loading ? getTranslation(language, 'saving') : getTranslation(language, 'savePermissions')}
                     </button>
                   </div>
                 )}
@@ -601,19 +655,19 @@ export default function SettingsModal({ isOpen, onClose, initialTab = 'integrati
 
             {activeTab === 'account' && (
               <div>
-                <h2 className="text-xl font-semibold text-gray-900 mb-2">계정</h2>
-                <p className="text-sm text-gray-500 mb-8">계정 설정을 관리합니다.</p>
+                <h2 className="text-xl font-semibold text-gray-900 mb-2">{getTranslation(language, 'account')}</h2>
+                <p className="text-sm text-gray-500 mb-8">{getTranslation(language, 'accountDesc')}</p>
 
                 {/* Account Info */}
                 <div className="border border-gray-200 rounded-xl p-4 mb-6">
-                  <h3 className="font-medium text-gray-900 mb-3">계정 정보</h3>
+                  <h3 className="font-medium text-gray-900 mb-3">{getTranslation(language, 'accountInfo')}</h3>
                   <div className="space-y-2">
                     <div className="flex justify-between text-sm">
-                      <span className="text-gray-500">이름</span>
+                      <span className="text-gray-500">{getTranslation(language, 'name')}</span>
                       <span className="text-gray-900">{userName}</span>
                     </div>
                     <div className="flex justify-between text-sm">
-                      <span className="text-gray-500">이메일</span>
+                      <span className="text-gray-500">{getTranslation(language, 'email')}</span>
                       <span className="text-gray-900">{userEmail}</span>
                     </div>
                   </div>
@@ -621,9 +675,9 @@ export default function SettingsModal({ isOpen, onClose, initialTab = 'integrati
 
                 {/* Danger Zone */}
                 <div className="border border-red-200 rounded-xl p-4 bg-red-50">
-                  <h3 className="font-medium text-red-700 mb-2">위험 구역</h3>
+                  <h3 className="font-medium text-red-700 mb-2">{getTranslation(language, 'dangerZone')}</h3>
                   <p className="text-sm text-red-600 mb-4">
-                    계정을 삭제하면 모든 데이터가 영구적으로 삭제됩니다. 이 작업은 되돌릴 수 없습니다.
+                    {getTranslation(language, 'deleteAccountDesc')}
                   </p>
                   <button
                     onClick={handleDeleteAccount}
@@ -634,14 +688,14 @@ export default function SettingsModal({ isOpen, onClose, initialTab = 'integrati
                         : 'bg-red-100 text-red-700 hover:bg-red-200'
                     }`}
                   >
-                    {deleteConfirm ? '정말 삭제하시겠습니까?' : '계정 삭제'}
+                    {deleteConfirm ? getTranslation(language, 'deleteConfirm') : getTranslation(language, 'deleteAccount')}
                   </button>
                   {deleteConfirm && (
                     <button
                       onClick={() => setDeleteConfirm(false)}
                       className="ml-2 px-4 py-2 rounded-lg text-sm font-medium bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors"
                     >
-                      취소
+                      {getTranslation(language, 'cancel')}
                     </button>
                   )}
                 </div>

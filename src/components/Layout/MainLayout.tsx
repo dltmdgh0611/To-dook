@@ -6,16 +6,19 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import TodoMain from '@/components/Todo/TodoMain';
 import ChatPanel from '@/components/Chat/ChatPanel';
 import SettingsModal from '@/components/Settings/SettingsModal';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { getTranslation } from '@/lib/i18n';
 
 export default function MainLayout() {
     const { data: session, status } = useSession();
     const router = useRouter();
     const searchParams = useSearchParams();
+    const { language } = useLanguage();
     const [isChatOpen, setIsChatOpen] = useState(true);
     const [currentView, setCurrentView] = useState<'todo' | 'card'>('todo');
     const [isProfileOpen, setIsProfileOpen] = useState(false);
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-    const [settingsInitialTab, setSettingsInitialTab] = useState<'integrations' | 'permissions' | 'account'>('integrations');
+    const [settingsInitialTab, setSettingsInitialTab] = useState<'general' | 'integrations' | 'permissions' | 'account'>('integrations');
     const [generateTrigger, setGenerateTrigger] = useState(0);
     const [addTodoTrigger, setAddTodoTrigger] = useState(0);
     // 온보딩 단계: 0 = 완료, 1 = 이름 입력, 2 = 설정 안내, 3 = 새로고침 안내
@@ -173,7 +176,7 @@ export default function MainLayout() {
     if (status === 'loading') {
         return (
             <div className="flex items-center justify-center h-screen w-screen bg-white">
-                <div className="text-gray-500">로딩 중...</div>
+                <div className="text-gray-500">{getTranslation(language, 'loading')}</div>
             </div>
         );
     }
@@ -184,7 +187,7 @@ export default function MainLayout() {
 
     const userInitial = session.user?.name?.charAt(0).toUpperCase() || 'U';
     const userImage = session.user?.image;
-    const userName = session.user?.name || '사용자';
+    const userName = session.user?.name || getTranslation(language, 'user');
     const userEmail = session.user?.email || '';
 
     return (
@@ -203,12 +206,12 @@ export default function MainLayout() {
                                 <span className="text-xl">👋</span>
                             </div>
                             <div>
-                                <p className="font-semibold text-white text-base">환영합니다!</p>
-                                <p className="text-xs text-white/70 mt-0.5">Step 1 of 3</p>
+                                <p className="font-semibold text-white text-base">{getTranslation(language, 'welcome')}</p>
+                                <p className="text-xs text-white/70 mt-0.5">{getTranslation(language, 'step1of3')}</p>
                             </div>
                         </div>
                         <p className="text-sm text-white/90 mb-5 leading-relaxed">
-                            이름을 알려주시면 더 개인화된 경험을 제공해드릴게요.
+                            {getTranslation(language, 'welcomeMessage')}
                         </p>
                         
                         <div className="mb-5">
@@ -221,7 +224,7 @@ export default function MainLayout() {
                                         handleNameSubmit();
                                     }
                                 }}
-                                placeholder="이름을 입력해주세요"
+                                placeholder={getTranslation(language, 'enterName')}
                                 className="w-full px-4 py-3 text-base bg-white rounded-lg focus:outline-none focus:ring-2 focus:ring-white/50 transition-all placeholder:text-gray-400"
                                 autoFocus
                             />
@@ -232,14 +235,14 @@ export default function MainLayout() {
                                 onClick={handleSkipOnboarding}
                                 className="text-xs text-white/70 hover:text-white transition-colors"
                             >
-                                건너뛰기
+                                {getTranslation(language, 'skip')}
                             </button>
                             <button
                                 onClick={handleNameSubmit}
                                 disabled={!nameInput.trim()}
                                 className="px-5 py-2 bg-white text-[var(--color-primary)] text-sm font-semibold rounded-lg hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                                계속하기
+                                {getTranslation(language, 'continue')}
                             </button>
                         </div>
                     </div>
@@ -255,7 +258,7 @@ export default function MainLayout() {
                     <button 
                         onClick={() => onboardingStep === 0 && setAddTodoTrigger(prev => prev + 1)}
                         className={`w-9 h-9 rounded-full bg-[var(--color-primary)] flex items-center justify-center text-white shadow-md transition-all ${onboardingStep === 0 ? 'hover:bg-[var(--color-primary-hover)] hover:shadow-lg' : 'opacity-50 cursor-not-allowed'}`}
-                        title="새 할 일 추가"
+                        title={getTranslation(language, 'newTodo')}
                         disabled={onboardingStep > 0}
                     >
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-4 h-4">
@@ -266,7 +269,7 @@ export default function MainLayout() {
                         <button 
                             onClick={() => onboardingStep === 0 && setGenerateTrigger(prev => prev + 1)}
                             className={`w-9 h-9 rounded-full border-2 border-[var(--color-primary)] flex items-center justify-center transition-all ${onboardingStep === 3 ? 'bg-white ring-4 ring-white/50 shadow-lg' : onboardingStep === 0 ? 'hover:bg-[var(--color-primary)]/10' : 'opacity-50 cursor-not-allowed'}`}
-                            title="AI로 할 일 생성"
+                            title={getTranslation(language, 'generateWithAI')}
                             disabled={onboardingStep > 0 && onboardingStep !== 3}
                         >
                             <svg 
@@ -292,31 +295,31 @@ export default function MainLayout() {
                                         <span className="text-xl">🔄</span>
                                     </div>
                                     <div>
-                                        <p className="font-semibold text-white text-base">AI로 할 일 생성하기</p>
-                                        <p className="text-xs text-white/70 mt-0.5">Step 3 of 3</p>
+                                        <p className="font-semibold text-white text-base">{getTranslation(language, 'generateWithAITitle')}</p>
+                                        <p className="text-xs text-white/70 mt-0.5">{getTranslation(language, 'step3of3')}</p>
                                     </div>
                                 </div>
                                 <p className="text-sm text-white/90 mb-4 leading-relaxed">
-                                    이 버튼을 클릭하면 연동된 Gmail, Slack, Notion에서 AI가 할 일을 자동으로 추출해요.
+                                    {getTranslation(language, 'generateWithAIDesc')}
                                 </p>
                                 <div className="flex items-center gap-2 text-xs text-white bg-white/20 rounded-lg p-2.5 mb-5">
                                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4 flex-shrink-0">
                                         <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
                                     </svg>
-                                    <span>계정을 먼저 연동해야 사용할 수 있어요!</span>
+                                    <span>{getTranslation(language, 'accountLinkNote')}</span>
                                 </div>
                                 <div className="flex items-center justify-between">
                                     <button 
                                         onClick={handleSkipOnboarding}
                                         className="text-xs text-white/70 hover:text-white transition-colors"
                                     >
-                                        건너뛰기
+                                        {getTranslation(language, 'skip')}
                                     </button>
                                     <button 
                                         onClick={handleNextOnboardingStep}
                                         className="px-5 py-2 bg-white text-[var(--color-primary)] text-sm font-semibold rounded-lg hover:bg-gray-100 transition-colors"
                                     >
-                                        확인
+                                        {getTranslation(language, 'confirm')}
                                     </button>
                                 </div>
                             </div>
@@ -347,26 +350,25 @@ export default function MainLayout() {
                                     <span className="text-xl">⚙️</span>
                                 </div>
                                 <div>
-                                    <p className="font-semibold text-white text-base">설정에서 계정 연동하기</p>
-                                    <p className="text-xs text-white/70 mt-0.5">Step 2 of 3</p>
+                                    <p className="font-semibold text-white text-base">{getTranslation(language, 'accountLinkTitle')}</p>
+                                    <p className="text-xs text-white/70 mt-0.5">{getTranslation(language, 'step2of3')}</p>
                                 </div>
                             </div>
                             <p className="text-sm text-white/90 mb-5 leading-relaxed">
-                                프로필을 클릭한 후 <strong className="text-white">&quot;설정&quot;</strong>에서 Gmail, Slack, Notion을 연동하세요. 
-                                연동하면 AI가 자동으로 할 일을 생성해드립니다.
+                                {getTranslation(language, 'accountLinkDesc')}
                             </p>
                             <div className="flex items-center justify-between">
                                 <button 
                                     onClick={handleSkipOnboarding}
                                     className="text-xs text-white/70 hover:text-white transition-colors"
                                 >
-                                    건너뛰기
+                                    {getTranslation(language, 'skip')}
                                 </button>
                                 <button 
                                     onClick={handleNextOnboardingStep}
                                     className="px-5 py-2 bg-white text-[var(--color-primary)] text-sm font-semibold rounded-lg hover:bg-gray-100 transition-colors"
                                 >
-                                    확인
+                                    {getTranslation(language, 'confirm')}
                                 </button>
                             </div>
                         </div>
@@ -388,7 +390,7 @@ export default function MainLayout() {
                                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
                                             <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 01-1.043 3.296 3.745 3.745 0 01-3.296 1.043A3.745 3.745 0 0112 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 01-3.296-1.043 3.745 3.745 0 01-1.043-3.296A3.745 3.745 0 013 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 011.043-3.296 3.746 3.746 0 013.296-1.043A3.746 3.746 0 0112 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 013.296 1.043 3.746 3.746 0 011.043 3.296A3.745 3.745 0 0121 12z" />
                                         </svg>
-                                        <span>업그레이드 플랜</span>
+                                        <span>{getTranslation(language, 'upgradePlan')}</span>
                                     </button>
                                     <button 
                                         onClick={() => {
@@ -401,7 +403,7 @@ export default function MainLayout() {
                                             <path strokeLinecap="round" strokeLinejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 010 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 010-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.281z" />
                                             <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                                         </svg>
-                                        <span>설정</span>
+                                        <span>{getTranslation(language, 'settings')}</span>
                                     </button>
                                     <button 
                                         onClick={handleLogout}
@@ -410,7 +412,7 @@ export default function MainLayout() {
                                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
                                             <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
                                         </svg>
-                                        <span>로그아웃</span>
+                                        <span>{getTranslation(language, 'logout')}</span>
                                     </button>
                                 </div>
                             </div>
@@ -432,7 +434,7 @@ export default function MainLayout() {
                         addTodoTrigger={addTodoTrigger}
                         displayName={displayName}
                         onOpenSettings={(tab) => {
-                            setSettingsInitialTab(tab || 'integrations');
+                            setSettingsInitialTab(tab || 'general');
                             setIsSettingsOpen(true);
                         }}
                     />
@@ -453,10 +455,10 @@ export default function MainLayout() {
                     <div className="bg-[var(--color-primary)] text-white px-4 py-2.5 rounded-full shadow-lg flex items-center gap-3">
                         <div className="flex items-center gap-2">
                             <span className="text-lg">✨</span>
-                            <span className="text-sm font-medium">7일 무료체험 중</span>
+                            <span className="text-sm font-medium">{getTranslation(language, 'freeTrial')}</span>
                         </div>
                         <div className="w-px h-4 bg-white/30" />
-                        <span className="text-xs text-white/80">남은 기간: {daysRemaining}일</span>
+                        <span className="text-xs text-white/80">{getTranslation(language, 'daysRemaining', { days: daysRemaining.toString() })}</span>
                     </div>
                 </div>
             )}
