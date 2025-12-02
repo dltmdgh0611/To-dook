@@ -251,8 +251,8 @@ export default function MainLayout() {
 
             <aside className={`w-14 border-r border-gray-200 bg-[#faf8f3] flex flex-col items-center justify-between py-3 ${onboardingStep > 0 ? 'relative z-[60]' : ''}`}>
                 <div className="flex flex-col items-center gap-3">
-                    <button className={`w-9 h-9 rounded-xl bg-gray-800 flex items-center justify-center text-white text-xs font-bold shadow-md transition-shadow ${onboardingStep === 0 ? 'hover:shadow-lg' : 'opacity-50 cursor-not-allowed'}`} disabled={onboardingStep > 0}>
-                        O
+                    <button className={`w-9 h-9 rounded-xl bg-white flex items-center justify-center shadow-md transition-shadow ${onboardingStep === 0 ? 'hover:shadow-lg' : 'opacity-50 cursor-not-allowed'}`} disabled={onboardingStep > 0}>
+                        <img src="/logo.png" alt="To-Dook Logo" className="w-7 h-7" />
                     </button>
                     <div className="w-6 h-px bg-gray-200" />
                     <button 

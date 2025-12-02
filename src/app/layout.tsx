@@ -7,6 +7,9 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 export const metadata: Metadata = {
   title: "To-Dook",
   description: "할 일 관리와 AI 채팅",
+  icons: {
+    icon: '/logo.png',
+  },
 };
 
 export default function RootLayout({
