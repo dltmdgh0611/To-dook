@@ -308,8 +308,8 @@ export default function MainLayout() {
             {/* 왼쪽 사이드바 (데스크톱) / 하단 네비게이션 (모바일) */}
             <aside className={`${isMobile 
                 ? 'fixed bottom-0 left-0 right-0 h-16 border-t flex-row justify-around px-4 z-40' 
-                : 'w-14 border-r flex-col items-center justify-between py-3'
-            } border-gray-200 bg-[#faf8f3] flex items-center ${onboardingStep > 0 ? 'relative z-[60]' : ''}`}>
+                : 'w-14 border-r flex flex-col items-center justify-between py-3'
+            } border-gray-200 bg-[#faf8f3] ${onboardingStep > 0 ? 'relative z-[60]' : ''}`}>
                 {/* 로고 - 데스크톱만 */}
                 {!isMobile && (
                     <div className="flex flex-col items-center gap-3">
@@ -417,71 +417,76 @@ export default function MainLayout() {
                     )}
                     
                     {/* 프로필 버튼 */}
-                    <button 
-                        onClick={() => onboardingStep === 0 && setIsProfileOpen(!isProfileOpen)}
-                        className={`w-9 h-9 md:w-8 md:h-8 rounded-full bg-[var(--color-primary)] flex items-center justify-center text-white text-xs font-semibold transition-all overflow-hidden ${onboardingStep === 2 ? 'ring-4 ring-white/50 shadow-lg' : onboardingStep === 0 ? 'hover:shadow-lg' : 'opacity-50 cursor-not-allowed'}`}
-                        disabled={onboardingStep > 0 && onboardingStep !== 2}
-                    >
-                        {userImage ? (
-                            <img src={userImage} alt={userName} className="w-full h-full object-cover" />
-                        ) : (
-                            userInitial
-                        )}
-                    </button>
-                </div>
+                    <div className="relative">
+                        <button 
+                            onClick={() => {
+                                if (onboardingStep === 0 || onboardingStep === 2) {
+                                    setIsProfileOpen(!isProfileOpen);
+                                }
+                            }}
+                            className={`w-9 h-9 md:w-8 md:h-8 rounded-full bg-[var(--color-primary)] flex items-center justify-center text-white text-xs font-semibold transition-all overflow-hidden ${onboardingStep === 2 ? 'ring-4 ring-white/50 shadow-lg' : onboardingStep === 0 ? 'hover:shadow-lg' : 'opacity-50 cursor-not-allowed'}`}
+                            disabled={onboardingStep > 0 && onboardingStep !== 2}
+                        >
+                            {userImage ? (
+                                <img src={userImage} alt={userName} className="w-full h-full object-cover" />
+                            ) : (
+                                userInitial
+                            )}
+                        </button>
 
-                {/* 온보딩 Step 2: 설정 안내 툴팁 */}
-                {onboardingStep === 2 && (
-                    <div className={`${isMobile 
-                        ? 'fixed bottom-20 left-4 right-4 z-[70]' 
-                        : 'absolute bottom-0 left-full ml-3 w-80 z-[70]'
-                    } bg-[var(--color-primary)] rounded-xl shadow-2xl p-5`}>
-                        {!isMobile && (
-                            <div className="absolute left-0 bottom-4 -translate-x-2">
-                                <div className="w-0 h-0 border-t-8 border-t-transparent border-b-8 border-b-transparent border-r-8 border-r-[var(--color-primary)]"></div>
+                        {/* 온보딩 Step 2: 설정 안내 툴팁 */}
+                        {onboardingStep === 2 && (
+                            <div className={`${isMobile 
+                                ? 'fixed bottom-20 left-4 right-4 z-[70]' 
+                                : 'absolute bottom-0 left-full ml-3 w-80 z-[70]'
+                            } bg-[var(--color-primary)] rounded-xl shadow-2xl p-5`}>
+                                {!isMobile && (
+                                    <div className="absolute left-0 bottom-4 -translate-x-2">
+                                        <div className="w-0 h-0 border-t-8 border-t-transparent border-b-8 border-b-transparent border-r-8 border-r-[var(--color-primary)]"></div>
+                                    </div>
+                                )}
+                                {isMobile && (
+                                    <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-full">
+                                        <div className="w-0 h-0 border-l-8 border-l-transparent border-r-8 border-r-transparent border-t-8 border-t-[var(--color-primary)]"></div>
+                                    </div>
+                                )}
+                                <div className="flex items-start gap-3 mb-3">
+                                    <div className="w-9 h-9 rounded-lg bg-white/20 flex items-center justify-center flex-shrink-0">
+                                        <span className="text-xl">⚙️</span>
+                                    </div>
+                                    <div>
+                                        <p className="font-semibold text-white text-base">{getTranslation(language, 'accountLinkTitle')}</p>
+                                        <p className="text-xs text-white/70 mt-0.5">{getTranslation(language, 'step2of3')}</p>
+                                    </div>
+                                </div>
+                                <p className="text-sm text-white/90 mb-5 leading-relaxed">
+                                    {getTranslation(language, 'accountLinkDesc')}
+                                </p>
+                                <div className="flex items-center justify-between">
+                                    <button 
+                                        onClick={handleSkipOnboarding}
+                                        className="text-xs text-white/70 hover:text-white transition-colors"
+                                    >
+                                        {getTranslation(language, 'skip')}
+                                    </button>
+                                    <button 
+                                        onClick={handleNextOnboardingStep}
+                                        className="px-5 py-2 bg-white text-[var(--color-primary)] text-sm font-semibold rounded-lg hover:bg-gray-100 transition-colors"
+                                    >
+                                        {getTranslation(language, 'confirm')}
+                                    </button>
+                                </div>
                             </div>
                         )}
-                        {isMobile && (
-                            <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-full">
-                                <div className="w-0 h-0 border-l-8 border-l-transparent border-r-8 border-r-transparent border-t-8 border-t-[var(--color-primary)]"></div>
-                            </div>
-                        )}
-                        <div className="flex items-start gap-3 mb-3">
-                            <div className="w-9 h-9 rounded-lg bg-white/20 flex items-center justify-center flex-shrink-0">
-                                <span className="text-xl">⚙️</span>
-                            </div>
-                            <div>
-                                <p className="font-semibold text-white text-base">{getTranslation(language, 'accountLinkTitle')}</p>
-                                <p className="text-xs text-white/70 mt-0.5">{getTranslation(language, 'step2of3')}</p>
-                            </div>
-                        </div>
-                        <p className="text-sm text-white/90 mb-5 leading-relaxed">
-                            {getTranslation(language, 'accountLinkDesc')}
-                        </p>
-                        <div className="flex items-center justify-between">
-                            <button 
-                                onClick={handleSkipOnboarding}
-                                className="text-xs text-white/70 hover:text-white transition-colors"
-                            >
-                                {getTranslation(language, 'skip')}
-                            </button>
-                            <button 
-                                onClick={handleNextOnboardingStep}
-                                className="px-5 py-2 bg-white text-[var(--color-primary)] text-sm font-semibold rounded-lg hover:bg-gray-100 transition-colors"
-                            >
-                                {getTranslation(language, 'confirm')}
-                            </button>
-                        </div>
-                    </div>
-                )}
-                
-                {isProfileOpen && (
-                    <>
-                        <div 
-                            className="fixed inset-0 z-40" 
-                            onClick={() => setIsProfileOpen(false)}
-                        />
-                        <div className={`absolute ${isMobile ? 'bottom-full right-0 mb-2' : 'bottom-full left-full ml-2 mb-2'} w-56 bg-white rounded-2xl shadow-xl border border-gray-200 py-2 z-50`}>
+
+                        {/* 프로필 메뉴 */}
+                        {isProfileOpen && (
+                            <>
+                                <div 
+                                    className="fixed inset-0 z-[65]" 
+                                    onClick={() => setIsProfileOpen(false)}
+                                />
+                                <div className={`absolute ${isMobile ? 'bottom-full right-0 mb-2' : 'bottom-full left-full ml-2 mb-2'} w-56 bg-white rounded-2xl shadow-xl border border-gray-200 py-2 z-[70]`}>
                             <div className="px-4 py-3 border-b border-gray-100">
                                 <p className="font-semibold text-gray-900">{userName}</p>
                                 <p className="text-xs text-gray-500">{userEmail}</p>
@@ -517,8 +522,10 @@ export default function MainLayout() {
                                 </button>
                             </div>
                         </div>
-                    </>
-                )}
+                            </>
+                        )}
+                    </div>
+                </div>
             </aside>
 
             <div className={`flex-1 flex h-full overflow-hidden relative ${isMobile ? 'pb-16' : ''}`}>
