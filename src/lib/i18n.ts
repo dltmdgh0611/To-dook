@@ -17,6 +17,8 @@ export const translations = {
     user: '사용자',
     
     // 메인 레이아웃
+    greeting: '안녕하세요, {name}님',
+    greetingSubtitle: '오늘도 좋은 하루 되세요!',
     welcome: '환영합니다!',
     welcomeMessage: '이름을 알려주시면 더 개인화된 경험을 제공해드릴게요.',
     step1of3: 'Step 1 of 3',
@@ -123,11 +125,6 @@ export const translations = {
     // 날짜 포맷
     todayDate: '오늘',
     tomorrowDate: '내일',
-    
-    // 모바일 차단
-    mobileBlockTitle: '데스크탑으로 접속해주세요',
-    mobileBlockMessage: '이 서비스는 데스크탑 환경에서만 사용할 수 있습니다.',
-    mobileBlockSubMessage: 'PC 또는 노트북에서 접속해주시기 바랍니다.',
   },
   en: {
     // Common
@@ -143,6 +140,8 @@ export const translations = {
     user: 'User',
     
     // Main Layout
+    greeting: 'Hello, {name}',
+    greetingSubtitle: 'Have a great day!',
     welcome: 'Welcome!',
     welcomeMessage: 'Please let us know your name so we can provide you with a more personalized experience.',
     step1of3: 'Step 1 of 3',
@@ -249,11 +248,6 @@ export const translations = {
     // Date Format
     todayDate: 'Today',
     tomorrowDate: 'Tomorrow',
-    
-    // Mobile Block
-    mobileBlockTitle: 'Please use Desktop',
-    mobileBlockMessage: 'This service is only available on desktop devices.',
-    mobileBlockSubMessage: 'Please access from a PC or laptop.',
   }
 };
 

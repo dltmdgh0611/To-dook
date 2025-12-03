@@ -5,6 +5,8 @@ import CardMain from '@/components/Card/CardMain';
 import AgentFeedback, { AgentStep } from '@/components/Todo/AgentFeedback';
 import TodoSkeleton from '@/components/Todo/TodoSkeleton';
 import DatePicker from '@/components/Todo/DatePicker';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { getTranslation } from '@/lib/i18n';
 import {
     DndContext,
     closestCenter,
@@ -32,6 +34,7 @@ interface TodoMainProps {
     addTodoTrigger?: number;
     displayName?: string;
     onOpenSettings?: (tab?: 'integrations' | 'permissions' | 'account') => void;
+    isMobile?: boolean;
 }
 
 type SourceInfo = {
@@ -291,8 +294,10 @@ export default function TodoMain({
     generateTrigger = 0,
     addTodoTrigger = 0,
     displayName,
-    onOpenSettings
+    onOpenSettings,
+    isMobile = false
 }: TodoMainProps) {
+    const { language } = useLanguage();
     const [todos, setTodos] = useState<TodoItem[]>([]);
     const [showCompleted, setShowCompleted] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
@@ -890,13 +895,13 @@ export default function TodoMain({
 
     return (
         <div className="flex h-full flex-col bg-white">
-            <div className="flex-1 overflow-y-auto px-12 py-12 relative">
-                <div className="space-y-8 max-w-3xl mx-auto">
-                    <div className="mb-8">
-                        <h1 className="text-4xl font-bold text-gray-900 mb-2">
-                            안녕하세요, {displayName || '사용자'}님
+            <div className={`flex-1 overflow-y-auto ${isMobile ? 'px-4 py-6' : 'px-12 py-12'} relative`}>
+                <div className="space-y-6 md:space-y-8 max-w-3xl mx-auto">
+                    <div className="mb-6 md:mb-8">
+                        <h1 className={`${isMobile ? 'text-2xl' : 'text-4xl'} font-bold text-gray-900 mb-2`}>
+                            {getTranslation(language, 'greeting', { name: displayName || getTranslation(language, 'user') })}
                         </h1>
-                        <p className="text-gray-500 text-sm">오늘도 좋은 하루 되세요!</p>
+                        <p className="text-gray-500 text-sm">{getTranslation(language, 'greetingSubtitle')}</p>
                     </div>
 
                     {currentView === 'todo' ? (
@@ -1048,18 +1053,20 @@ export default function TodoMain({
                     )}
                 </div>
 
-                {/* 채팅 토글 버튼 */}
-                <button 
-                    onClick={onToggleChat}
-                    className={`fixed bottom-8 w-14 h-14 rounded-full bg-[var(--color-primary)] text-white shadow-xl hover:shadow-2xl hover:bg-[var(--color-primary-hover)] transition-all hover:scale-105 flex items-center justify-center z-50 ${
-                        isChatOpen ? 'right-[392px]' : 'right-8'
-                    }`}
-                    aria-label="채팅 열기"
-                >
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-6 h-6">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 01.865-.501 48.172 48.172 0 003.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z" />
-                    </svg>
-                </button>
+                {/* 채팅 토글 버튼 - 모바일에서는 숨김 (하단 네비에서 접근) */}
+                {!isMobile && (
+                    <button 
+                        onClick={onToggleChat}
+                        className={`fixed bottom-8 w-14 h-14 rounded-full bg-[var(--color-primary)] text-white shadow-xl hover:shadow-2xl hover:bg-[var(--color-primary-hover)] transition-all hover:scale-105 flex items-center justify-center z-50 ${
+                            isChatOpen ? 'right-[392px]' : 'right-8'
+                        }`}
+                        aria-label="채팅 열기"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-6 h-6">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 01.865-.501 48.172 48.172 0 003.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z" />
+                        </svg>
+                    </button>
+                )}
             </div>
 
             <style jsx>{`

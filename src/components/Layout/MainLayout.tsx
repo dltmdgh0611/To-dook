@@ -15,6 +15,21 @@ export default function MainLayout() {
     const searchParams = useSearchParams();
     const { language } = useLanguage();
     const [isChatOpen, setIsChatOpen] = useState(true);
+    const [isMobile, setIsMobile] = useState(false);
+    
+    // 모바일 여부 확인
+    useEffect(() => {
+        const checkMobile = () => {
+            setIsMobile(window.innerWidth <= 768);
+        };
+        
+        checkMobile();
+        window.addEventListener('resize', checkMobile);
+        
+        return () => {
+            window.removeEventListener('resize', checkMobile);
+        };
+    }, []);
     const [currentView, setCurrentView] = useState<'todo' | 'card'>('todo');
     const [isProfileOpen, setIsProfileOpen] = useState(false);
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -191,7 +206,7 @@ export default function MainLayout() {
     const userEmail = session.user?.email || '';
 
     return (
-        <div className="flex h-screen w-screen overflow-hidden bg-white text-gray-900">
+        <div className={`flex ${isMobile ? 'flex-col' : 'flex-row'} h-screen w-screen overflow-hidden bg-white text-gray-900`}>
             {/* 온보딩 블러 오버레이 */}
             {onboardingStep > 0 && (
                 <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[55]" />
@@ -249,26 +264,37 @@ export default function MainLayout() {
                 </div>
             )}
 
-            <aside className={`w-14 border-r border-gray-200 bg-[#faf8f3] flex flex-col items-center justify-between py-3 ${onboardingStep > 0 ? 'relative z-[60]' : ''}`}>
-                <div className="flex flex-col items-center gap-3">
-                    <button className={`w-9 h-9 rounded-xl bg-white flex items-center justify-center shadow-md transition-shadow ${onboardingStep === 0 ? 'hover:shadow-lg' : 'opacity-50 cursor-not-allowed'}`} disabled={onboardingStep > 0}>
-                        <img src="/logo.png" alt="To-Dook Logo" className="w-7 h-7" />
-                    </button>
-                    <div className="w-6 h-px bg-gray-200" />
+            {/* 왼쪽 사이드바 (데스크톱) / 하단 네비게이션 (모바일) */}
+            <aside className={`${isMobile 
+                ? 'fixed bottom-0 left-0 right-0 h-16 border-t flex-row justify-around px-4 z-40' 
+                : 'w-14 border-r flex-col items-center justify-between py-3'
+            } border-gray-200 bg-[#faf8f3] flex items-center ${onboardingStep > 0 ? 'relative z-[60]' : ''}`}>
+                {/* 로고 - 데스크톱만 */}
+                {!isMobile && (
+                    <div className="flex flex-col items-center gap-3">
+                        <button className={`w-9 h-9 rounded-xl bg-white flex items-center justify-center shadow-md transition-shadow ${onboardingStep === 0 ? 'hover:shadow-lg' : 'opacity-50 cursor-not-allowed'}`} disabled={onboardingStep > 0}>
+                            <img src="/logo.png" alt="To-Dook Logo" className="w-7 h-7" />
+                        </button>
+                        <div className="w-6 h-px bg-gray-200" />
+                    </div>
+                )}
+                
+                {/* 액션 버튼들 */}
+                <div className={`flex ${isMobile ? 'flex-row gap-6' : 'flex-col gap-3'} items-center`}>
                     <button 
                         onClick={() => onboardingStep === 0 && setAddTodoTrigger(prev => prev + 1)}
-                        className={`w-9 h-9 rounded-full bg-[var(--color-primary)] flex items-center justify-center text-white shadow-md transition-all ${onboardingStep === 0 ? 'hover:bg-[var(--color-primary-hover)] hover:shadow-lg' : 'opacity-50 cursor-not-allowed'}`}
+                        className={`w-10 h-10 md:w-9 md:h-9 rounded-full bg-[var(--color-primary)] flex items-center justify-center text-white shadow-md transition-all ${onboardingStep === 0 ? 'hover:bg-[var(--color-primary-hover)] hover:shadow-lg' : 'opacity-50 cursor-not-allowed'}`}
                         title={getTranslation(language, 'newTodo')}
                         disabled={onboardingStep > 0}
                     >
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-4 h-4">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-5 h-5 md:w-4 md:h-4">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
                         </svg>
                     </button>
                     <div className="relative">
                         <button 
                             onClick={() => onboardingStep === 0 && setGenerateTrigger(prev => prev + 1)}
-                            className={`w-9 h-9 rounded-full border-2 border-[var(--color-primary)] flex items-center justify-center transition-all ${onboardingStep === 3 ? 'bg-white ring-4 ring-white/50 shadow-lg' : onboardingStep === 0 ? 'hover:bg-[var(--color-primary)]/10' : 'opacity-50 cursor-not-allowed'}`}
+                            className={`w-10 h-10 md:w-9 md:h-9 rounded-full border-2 border-[var(--color-primary)] flex items-center justify-center transition-all ${onboardingStep === 3 ? 'bg-white ring-4 ring-white/50 shadow-lg' : onboardingStep === 0 ? 'hover:bg-[var(--color-primary)]/10' : 'opacity-50 cursor-not-allowed'}`}
                             title={getTranslation(language, 'generateWithAI')}
                             disabled={onboardingStep > 0 && onboardingStep !== 3}
                         >
@@ -278,14 +304,14 @@ export default function MainLayout() {
                                 viewBox="0 0 24 24" 
                                 strokeWidth={2.5} 
                                 stroke="currentColor" 
-                                className="w-4 h-4 text-[var(--color-primary)]"
+                                className="w-5 h-5 md:w-4 md:h-4 text-[var(--color-primary)]"
                             >
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
                             </svg>
                         </button>
-
-                        {/* 온보딩 Step 3: 새로고침 안내 툴팁 */}
-                        {onboardingStep === 3 && (
+                        
+                        {/* 온보딩 Step 3: 새로고침 안내 툴팁 - 데스크톱만 */}
+                        {onboardingStep === 3 && !isMobile && (
                             <div className="absolute top-0 left-full ml-3 w-80 bg-[var(--color-primary)] rounded-xl shadow-2xl p-5 z-[70]">
                                 <div className="absolute left-0 top-4 -translate-x-2">
                                     <div className="w-0 h-0 border-t-8 border-t-transparent border-b-8 border-b-transparent border-r-8 border-r-[var(--color-primary)]"></div>
@@ -325,11 +351,24 @@ export default function MainLayout() {
                             </div>
                         )}
                     </div>
-                </div>
-                <div className="flex flex-col items-center gap-2 relative">
+                    
+                    {/* 모바일: 채팅 버튼 추가 */}
+                    {isMobile && (
+                        <button 
+                            onClick={() => setIsChatOpen(true)}
+                            className="w-10 h-10 rounded-full bg-[var(--color-primary)] flex items-center justify-center text-white shadow-md transition-all"
+                            title="Chat"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 01.865-.501 48.172 48.172 0 003.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z" />
+                            </svg>
+                        </button>
+                    )}
+                    
+                    {/* 프로필 버튼 */}
                     <button 
                         onClick={() => onboardingStep === 0 && setIsProfileOpen(!isProfileOpen)}
-                        className={`w-8 h-8 rounded-full bg-[var(--color-primary)] flex items-center justify-center text-white text-xs font-semibold transition-all overflow-hidden ${onboardingStep === 2 ? 'ring-4 ring-white/50 shadow-lg' : onboardingStep === 0 ? 'hover:shadow-lg' : 'opacity-50 cursor-not-allowed'}`}
+                        className={`w-9 h-9 md:w-8 md:h-8 rounded-full bg-[var(--color-primary)] flex items-center justify-center text-white text-xs font-semibold transition-all overflow-hidden ${onboardingStep === 2 ? 'ring-4 ring-white/50 shadow-lg' : onboardingStep === 0 ? 'hover:shadow-lg' : 'opacity-50 cursor-not-allowed'}`}
                         disabled={onboardingStep > 0 && onboardingStep !== 2}
                     >
                         {userImage ? (
@@ -338,92 +377,92 @@ export default function MainLayout() {
                             userInitial
                         )}
                     </button>
+                </div>
 
-                    {/* 온보딩 Step 2: 설정 안내 툴팁 */}
-                    {onboardingStep === 2 && (
-                        <div className="absolute bottom-0 left-full ml-3 w-80 bg-[var(--color-primary)] rounded-xl shadow-2xl p-5 z-[70]">
-                            <div className="absolute left-0 bottom-4 -translate-x-2">
-                                <div className="w-0 h-0 border-t-8 border-t-transparent border-b-8 border-b-transparent border-r-8 border-r-[var(--color-primary)]"></div>
+                {/* 온보딩 Step 2: 설정 안내 툴팁 - 데스크톱만 */}
+                {onboardingStep === 2 && !isMobile && (
+                    <div className="absolute bottom-0 left-full ml-3 w-80 bg-[var(--color-primary)] rounded-xl shadow-2xl p-5 z-[70]">
+                        <div className="absolute left-0 bottom-4 -translate-x-2">
+                            <div className="w-0 h-0 border-t-8 border-t-transparent border-b-8 border-b-transparent border-r-8 border-r-[var(--color-primary)]"></div>
+                        </div>
+                        <div className="flex items-start gap-3 mb-3">
+                            <div className="w-9 h-9 rounded-lg bg-white/20 flex items-center justify-center flex-shrink-0">
+                                <span className="text-xl">⚙️</span>
                             </div>
-                            <div className="flex items-start gap-3 mb-3">
-                                <div className="w-9 h-9 rounded-lg bg-white/20 flex items-center justify-center flex-shrink-0">
-                                    <span className="text-xl">⚙️</span>
-                                </div>
-                                <div>
-                                    <p className="font-semibold text-white text-base">{getTranslation(language, 'accountLinkTitle')}</p>
-                                    <p className="text-xs text-white/70 mt-0.5">{getTranslation(language, 'step2of3')}</p>
-                                </div>
+                            <div>
+                                <p className="font-semibold text-white text-base">{getTranslation(language, 'accountLinkTitle')}</p>
+                                <p className="text-xs text-white/70 mt-0.5">{getTranslation(language, 'step2of3')}</p>
                             </div>
-                            <p className="text-sm text-white/90 mb-5 leading-relaxed">
-                                {getTranslation(language, 'accountLinkDesc')}
-                            </p>
-                            <div className="flex items-center justify-between">
-                                <button 
-                                    onClick={handleSkipOnboarding}
-                                    className="text-xs text-white/70 hover:text-white transition-colors"
-                                >
-                                    {getTranslation(language, 'skip')}
+                        </div>
+                        <p className="text-sm text-white/90 mb-5 leading-relaxed">
+                            {getTranslation(language, 'accountLinkDesc')}
+                        </p>
+                        <div className="flex items-center justify-between">
+                            <button 
+                                onClick={handleSkipOnboarding}
+                                className="text-xs text-white/70 hover:text-white transition-colors"
+                            >
+                                {getTranslation(language, 'skip')}
+                            </button>
+                            <button 
+                                onClick={handleNextOnboardingStep}
+                                className="px-5 py-2 bg-white text-[var(--color-primary)] text-sm font-semibold rounded-lg hover:bg-gray-100 transition-colors"
+                            >
+                                {getTranslation(language, 'confirm')}
+                            </button>
+                        </div>
+                    </div>
+                )}
+                
+                {isProfileOpen && (
+                    <>
+                        <div 
+                            className="fixed inset-0 z-40" 
+                            onClick={() => setIsProfileOpen(false)}
+                        />
+                        <div className={`absolute ${isMobile ? 'bottom-full right-0 mb-2' : 'bottom-full left-full ml-2 mb-2'} w-56 bg-white rounded-2xl shadow-xl border border-gray-200 py-2 z-50`}>
+                            <div className="px-4 py-3 border-b border-gray-100">
+                                <p className="font-semibold text-gray-900">{userName}</p>
+                                <p className="text-xs text-gray-500">{userEmail}</p>
+                            </div>
+                            <div className="py-1">
+                                <button className="w-full px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-3">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 01-1.043 3.296 3.745 3.745 0 01-3.296 1.043A3.745 3.745 0 0112 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 01-3.296-1.043 3.745 3.745 0 01-1.043-3.296A3.745 3.745 0 013 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 011.043-3.296 3.746 3.746 0 013.296-1.043A3.746 3.746 0 0112 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 013.296 1.043 3.746 3.746 0 011.043 3.296A3.745 3.745 0 0121 12z" />
+                                    </svg>
+                                    <span>{getTranslation(language, 'upgradePlan')}</span>
                                 </button>
                                 <button 
-                                    onClick={handleNextOnboardingStep}
-                                    className="px-5 py-2 bg-white text-[var(--color-primary)] text-sm font-semibold rounded-lg hover:bg-gray-100 transition-colors"
+                                    onClick={() => {
+                                        setIsProfileOpen(false);
+                                        setIsSettingsOpen(true);
+                                    }}
+                                    className="w-full px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-3"
                                 >
-                                    {getTranslation(language, 'confirm')}
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 010 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 010-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.281z" />
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    </svg>
+                                    <span>{getTranslation(language, 'settings')}</span>
+                                </button>
+                                <button 
+                                    onClick={handleLogout}
+                                    className="w-full px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-3"
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
+                                    </svg>
+                                    <span>{getTranslation(language, 'logout')}</span>
                                 </button>
                             </div>
                         </div>
-                    )}
-                    
-                    {isProfileOpen && (
-                        <>
-                            <div 
-                                className="fixed inset-0 z-40" 
-                                onClick={() => setIsProfileOpen(false)}
-                            />
-                            <div className="absolute bottom-full left-full ml-2 mb-2 w-56 bg-white rounded-2xl shadow-xl border border-gray-200 py-2 z-50">
-                                <div className="px-4 py-3 border-b border-gray-100">
-                                    <p className="font-semibold text-gray-900">{userName}</p>
-                                    <p className="text-xs text-gray-500">{userEmail}</p>
-                                </div>
-                                <div className="py-1">
-                                    <button className="w-full px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-3">
-                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
-                                            <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 01-1.043 3.296 3.745 3.745 0 01-3.296 1.043A3.745 3.745 0 0112 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 01-3.296-1.043 3.745 3.745 0 01-1.043-3.296A3.745 3.745 0 013 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 011.043-3.296 3.746 3.746 0 013.296-1.043A3.746 3.746 0 0112 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 013.296 1.043 3.746 3.746 0 011.043 3.296A3.745 3.745 0 0121 12z" />
-                                        </svg>
-                                        <span>{getTranslation(language, 'upgradePlan')}</span>
-                                    </button>
-                                    <button 
-                                        onClick={() => {
-                                            setIsProfileOpen(false);
-                                            setIsSettingsOpen(true);
-                                        }}
-                                        className="w-full px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-3"
-                                    >
-                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
-                                            <path strokeLinecap="round" strokeLinejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 010 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 010-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.281z" />
-                                            <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                        </svg>
-                                        <span>{getTranslation(language, 'settings')}</span>
-                                    </button>
-                                    <button 
-                                        onClick={handleLogout}
-                                        className="w-full px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-3"
-                                    >
-                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
-                                            <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
-                                        </svg>
-                                        <span>{getTranslation(language, 'logout')}</span>
-                                    </button>
-                                </div>
-                            </div>
-                        </>
-                    )}
-                </div>
+                    </>
+                )}
             </aside>
 
-            <div className="flex-1 flex h-full overflow-hidden relative">
+            <div className={`flex-1 flex h-full overflow-hidden relative ${isMobile ? 'pb-16' : ''}`}>
                 <main className={`h-full overflow-hidden transition-all duration-300 ${
-                    isChatOpen ? 'w-[calc(100%-360px)]' : 'w-full'
+                    !isMobile && isChatOpen ? 'w-[calc(100%-360px)]' : 'w-full'
                 }`}>
                     <TodoMain 
                         onToggleChat={() => setIsChatOpen(!isChatOpen)} 
@@ -437,20 +476,43 @@ export default function MainLayout() {
                             setSettingsInitialTab(tab || 'general');
                             setIsSettingsOpen(true);
                         }}
+                        isMobile={isMobile}
                     />
                 </main>
 
-                <aside 
-                    className={`absolute top-0 right-0 h-full w-[360px] border-l border-gray-200 bg-[#faf8f3] transition-transform duration-300 ${
-                        isChatOpen ? 'translate-x-0' : 'translate-x-full'
-                    }`}
-                >
-                    <ChatPanel />
-                </aside>
+                {/* 채팅 패널 - 데스크톱: 사이드바 / 모바일: 풀스크린 모달 */}
+                {isMobile ? (
+                    isChatOpen && (
+                        <div className="fixed inset-0 z-50 bg-[#faf8f3]">
+                            <div className="flex items-center justify-between p-4 border-b border-gray-200">
+                                <h2 className="text-lg font-semibold">Chat</h2>
+                                <button 
+                                    onClick={() => setIsChatOpen(false)}
+                                    className="p-2 rounded-full hover:bg-gray-200 transition-colors"
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-6 h-6">
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                </button>
+                            </div>
+                            <div className="h-[calc(100%-60px)] overflow-hidden">
+                                <ChatPanel />
+                            </div>
+                        </div>
+                    )
+                ) : (
+                    <aside 
+                        className={`absolute top-0 right-0 h-full w-[360px] border-l border-gray-200 bg-[#faf8f3] transition-transform duration-300 ${
+                            isChatOpen ? 'translate-x-0' : 'translate-x-full'
+                        }`}
+                    >
+                        <ChatPanel />
+                    </aside>
+                )}
             </div>
 
-            {/* 7일 무료체험 배너 - 왼쪽 아래 사이드바 옆 */}
-            {onboardingStep === 0 && daysRemaining > 0 && (
+            {/* 7일 무료체험 배너 - 데스크톱: 왼쪽 아래 사이드바 옆 / 모바일: 숨김 */}
+            {!isMobile && onboardingStep === 0 && daysRemaining > 0 && (
                 <div className="fixed bottom-4 left-[72px] z-40 animate-fadeIn">
                     <div className="bg-[var(--color-primary)] text-white px-4 py-2.5 rounded-full shadow-lg flex items-center gap-3">
                         <div className="flex items-center gap-2">
