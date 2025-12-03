@@ -16,11 +16,18 @@ export default function MainLayout() {
     const { language } = useLanguage();
     const [isChatOpen, setIsChatOpen] = useState(false);
     const [isMobile, setIsMobile] = useState(false);
+    const [showMobileWarning, setShowMobileWarning] = useState(false);
     
     // 모바일 여부 확인
     useEffect(() => {
         const checkMobile = () => {
-            setIsMobile(window.innerWidth <= 768);
+            const mobile = window.innerWidth <= 768;
+            setIsMobile(mobile);
+            
+            // 모바일이고 아직 경고를 보지 않았다면 표시
+            if (mobile && !localStorage.getItem('mobileWarningDismissed')) {
+                setShowMobileWarning(true);
+            }
         };
         
         checkMobile();
@@ -205,8 +212,42 @@ export default function MainLayout() {
     const userName = session.user?.name || getTranslation(language, 'user');
     const userEmail = session.user?.email || '';
 
+    const handleMobileWarningClose = () => {
+        setShowMobileWarning(false);
+        localStorage.setItem('mobileWarningDismissed', 'true');
+    };
+
     return (
         <div className={`flex ${isMobile ? 'flex-col' : 'flex-row'} h-screen w-screen overflow-hidden bg-white text-gray-900`}>
+            {/* 모바일 경고 모달 */}
+            {showMobileWarning && (
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+                    <div className="bg-white rounded-2xl shadow-2xl p-6 md:p-8 w-full max-w-md">
+                        <div className="flex items-start gap-4 mb-5">
+                            <div className="w-12 h-12 rounded-xl bg-yellow-100 flex items-center justify-center flex-shrink-0">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-6 h-6 text-yellow-600">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.75.75A2.25 2.25 0 013 12.75m9.75-9.75a2.25 2.25 0 109.75 9.75m-9.75 0a2.25 2.25 0 01-9.75-9.75m9.75 0V3.75M9.75 3.75h4.5m-4.5 0v4.5m4.5-4.5h4.5m-4.5 4.5v4.5m-4.5-4.5h-4.5m4.5 0v-4.5m0 4.5H9.75" />
+                                </svg>
+                            </div>
+                            <div className="flex-1">
+                                <h2 className="text-xl font-bold text-gray-900 mb-2">
+                                    {getTranslation(language, 'mobileWarningTitle')}
+                                </h2>
+                                <p className="text-sm text-gray-600 leading-relaxed">
+                                    {getTranslation(language, 'mobileWarningMessage')}
+                                </p>
+                            </div>
+                        </div>
+                        <button
+                            onClick={handleMobileWarningClose}
+                            className="w-full px-6 py-3 bg-[var(--color-primary)] text-white font-semibold rounded-xl hover:bg-[var(--color-primary-hover)] transition-colors"
+                        >
+                            {getTranslation(language, 'mobileWarningContinue')}
+                        </button>
+                    </div>
+                </div>
+            )}
+
             {/* 온보딩 블러 오버레이 */}
             {onboardingStep > 0 && (
                 <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[55]" />
@@ -214,8 +255,8 @@ export default function MainLayout() {
 
             {/* 온보딩 Step 1: 이름 입력 모달 */}
             {onboardingStep === 1 && (
-                <div className="fixed inset-0 flex items-center justify-center z-[70]">
-                    <div className="bg-[var(--color-primary)] rounded-2xl shadow-2xl p-8 w-[400px] max-w-[90vw]">
+                <div className="fixed inset-0 flex items-center justify-center z-[70] p-4">
+                    <div className="bg-[var(--color-primary)] rounded-2xl shadow-2xl p-6 md:p-8 w-full max-w-md">
                         <div className="flex items-start gap-3 mb-6">
                             <div className="w-9 h-9 rounded-lg bg-white/20 flex items-center justify-center flex-shrink-0">
                                 <span className="text-xl">👋</span>
@@ -310,46 +351,56 @@ export default function MainLayout() {
                             </svg>
                         </button>
                         
-                        {/* 온보딩 Step 3: 새로고침 안내 툴팁 - 데스크톱만 */}
-                        {onboardingStep === 3 && !isMobile && (
-                            <div className="absolute top-0 left-full ml-3 w-80 bg-[var(--color-primary)] rounded-xl shadow-2xl p-5 z-[70]">
+                    {/* 온보딩 Step 3: 새로고침 안내 툴팁 */}
+                    {onboardingStep === 3 && (
+                        <div className={`${isMobile 
+                            ? 'fixed bottom-20 left-4 right-4 z-[70]' 
+                            : 'absolute top-0 left-full ml-3 w-80 z-[70]'
+                        } bg-[var(--color-primary)] rounded-xl shadow-2xl p-5`}>
+                            {!isMobile && (
                                 <div className="absolute left-0 top-4 -translate-x-2">
                                     <div className="w-0 h-0 border-t-8 border-t-transparent border-b-8 border-b-transparent border-r-8 border-r-[var(--color-primary)]"></div>
                                 </div>
-                                <div className="flex items-start gap-3 mb-3">
-                                    <div className="w-9 h-9 rounded-lg bg-white/20 flex items-center justify-center flex-shrink-0">
-                                        <span className="text-xl">🔄</span>
-                                    </div>
-                                    <div>
-                                        <p className="font-semibold text-white text-base">{getTranslation(language, 'generateWithAITitle')}</p>
-                                        <p className="text-xs text-white/70 mt-0.5">{getTranslation(language, 'step3of3')}</p>
-                                    </div>
+                            )}
+                            {isMobile && (
+                                <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-full">
+                                    <div className="w-0 h-0 border-l-8 border-l-transparent border-r-8 border-r-transparent border-t-8 border-t-[var(--color-primary)]"></div>
                                 </div>
-                                <p className="text-sm text-white/90 mb-4 leading-relaxed">
-                                    {getTranslation(language, 'generateWithAIDesc')}
-                                </p>
-                                <div className="flex items-center gap-2 text-xs text-white bg-white/20 rounded-lg p-2.5 mb-5">
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4 flex-shrink-0">
-                                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
-                                    </svg>
-                                    <span>{getTranslation(language, 'accountLinkNote')}</span>
+                            )}
+                            <div className="flex items-start gap-3 mb-3">
+                                <div className="w-9 h-9 rounded-lg bg-white/20 flex items-center justify-center flex-shrink-0">
+                                    <span className="text-xl">🔄</span>
                                 </div>
-                                <div className="flex items-center justify-between">
-                                    <button 
-                                        onClick={handleSkipOnboarding}
-                                        className="text-xs text-white/70 hover:text-white transition-colors"
-                                    >
-                                        {getTranslation(language, 'skip')}
-                                    </button>
-                                    <button 
-                                        onClick={handleNextOnboardingStep}
-                                        className="px-5 py-2 bg-white text-[var(--color-primary)] text-sm font-semibold rounded-lg hover:bg-gray-100 transition-colors"
-                                    >
-                                        {getTranslation(language, 'confirm')}
-                                    </button>
+                                <div>
+                                    <p className="font-semibold text-white text-base">{getTranslation(language, 'generateWithAITitle')}</p>
+                                    <p className="text-xs text-white/70 mt-0.5">{getTranslation(language, 'step3of3')}</p>
                                 </div>
                             </div>
-                        )}
+                            <p className="text-sm text-white/90 mb-4 leading-relaxed">
+                                {getTranslation(language, 'generateWithAIDesc')}
+                            </p>
+                            <div className="flex items-center gap-2 text-xs text-white bg-white/20 rounded-lg p-2.5 mb-5">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4 flex-shrink-0">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+                                </svg>
+                                <span>{getTranslation(language, 'accountLinkNote')}</span>
+                            </div>
+                            <div className="flex items-center justify-between">
+                                <button 
+                                    onClick={handleSkipOnboarding}
+                                    className="text-xs text-white/70 hover:text-white transition-colors"
+                                >
+                                    {getTranslation(language, 'skip')}
+                                </button>
+                                <button 
+                                    onClick={handleNextOnboardingStep}
+                                    className="px-5 py-2 bg-white text-[var(--color-primary)] text-sm font-semibold rounded-lg hover:bg-gray-100 transition-colors"
+                                >
+                                    {getTranslation(language, 'confirm')}
+                                </button>
+                            </div>
+                        </div>
+                    )}
                     </div>
                     
                     {/* 모바일: 채팅 버튼 추가 */}
@@ -379,12 +430,22 @@ export default function MainLayout() {
                     </button>
                 </div>
 
-                {/* 온보딩 Step 2: 설정 안내 툴팁 - 데스크톱만 */}
-                {onboardingStep === 2 && !isMobile && (
-                    <div className="absolute bottom-0 left-full ml-3 w-80 bg-[var(--color-primary)] rounded-xl shadow-2xl p-5 z-[70]">
-                        <div className="absolute left-0 bottom-4 -translate-x-2">
-                            <div className="w-0 h-0 border-t-8 border-t-transparent border-b-8 border-b-transparent border-r-8 border-r-[var(--color-primary)]"></div>
-                        </div>
+                {/* 온보딩 Step 2: 설정 안내 툴팁 */}
+                {onboardingStep === 2 && (
+                    <div className={`${isMobile 
+                        ? 'fixed bottom-20 left-4 right-4 z-[70]' 
+                        : 'absolute bottom-0 left-full ml-3 w-80 z-[70]'
+                    } bg-[var(--color-primary)] rounded-xl shadow-2xl p-5`}>
+                        {!isMobile && (
+                            <div className="absolute left-0 bottom-4 -translate-x-2">
+                                <div className="w-0 h-0 border-t-8 border-t-transparent border-b-8 border-b-transparent border-r-8 border-r-[var(--color-primary)]"></div>
+                            </div>
+                        )}
+                        {isMobile && (
+                            <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-full">
+                                <div className="w-0 h-0 border-l-8 border-l-transparent border-r-8 border-r-transparent border-t-8 border-t-[var(--color-primary)]"></div>
+                            </div>
+                        )}
                         <div className="flex items-start gap-3 mb-3">
                             <div className="w-9 h-9 rounded-lg bg-white/20 flex items-center justify-center flex-shrink-0">
                                 <span className="text-xl">⚙️</span>

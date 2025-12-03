@@ -125,6 +125,11 @@ export const translations = {
     // 날짜 포맷
     todayDate: '오늘',
     tomorrowDate: '내일',
+    
+    // 모바일 경고
+    mobileWarningTitle: '데스크탑 사용을 권장합니다',
+    mobileWarningMessage: '더 나은 경험을 위해 데스크탑 접속을 권장드립니다. 모바일에서는 일부 기능이 제한될 수 있습니다.',
+    mobileWarningContinue: '계속하기',
   },
   en: {
     // Common
@@ -248,6 +253,11 @@ export const translations = {
     // Date Format
     todayDate: 'Today',
     tomorrowDate: 'Tomorrow',
+    
+    // Mobile Warning
+    mobileWarningTitle: 'Desktop Recommended',
+    mobileWarningMessage: 'For a better experience, please access from a desktop. Some features may be limited on mobile.',
+    mobileWarningContinue: 'Continue',
   }
 };
 
