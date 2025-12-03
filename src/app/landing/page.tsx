@@ -14,9 +14,7 @@ export default function LandingPage() {
                 <div className="flex items-center justify-between gap-2 md:gap-8">
                     {/* 로고 */}
                     <Link href="/" className="flex items-center gap-1.5 md:gap-2 flex-shrink-0">
-                        <div className="w-5 h-5 md:w-7 md:h-7 rounded-lg bg-[var(--color-primary)] flex items-center justify-center text-white font-bold text-[10px] md:text-xs">
-                            T
-                        </div>
+                        <img src="/logo.png" alt="To-Dook Logo" className="w-5 h-5 md:w-7 md:h-7 rounded-lg" />
                         <span className="text-sm md:text-lg font-bold text-gray-900">to-dook</span>
                     </Link>
 
@@ -118,9 +116,7 @@ export default function LandingPage() {
                 <div className="max-w-7xl mx-auto">
                     <div className="flex flex-col md:flex-row items-center justify-between gap-3 md:gap-4">
                         <div className="flex items-center gap-2">
-                            <div className="w-6 h-6 rounded-lg bg-[var(--color-primary)] flex items-center justify-center text-white font-bold text-xs">
-                                T
-                            </div>
+                            <img src="/logo.png" alt="To-Dook Logo" className="w-6 h-6 rounded-lg" />
                             <span className="text-lg font-bold text-gray-900">to-dook</span>
                         </div>
                         <p className="text-xs md:text-sm text-gray-500">

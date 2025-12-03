@@ -49,9 +49,7 @@ export default function LoginPage() {
                 <div className="w-full max-w-md space-y-6 md:space-y-8">
                     {/* 로고 */}
                     <div className="flex items-center justify-center md:justify-start gap-2">
-                        <div className="w-8 h-8 rounded-lg bg-[var(--color-primary)] flex items-center justify-center text-white font-bold text-sm">
-                            T
-                        </div>
+                        <img src="/logo.png" alt="To-Dook Logo" className="w-8 h-8 rounded-lg" />
                         <span className="text-xl font-bold text-gray-900">to-dook</span>
                     </div>
 
