@@ -78,8 +78,8 @@ export default function LandingPage() {
                             </div>
                             <p className="text-xs md:text-sm text-gray-500 text-center">
                                 {language === 'ko' 
-                                    ? '900,000명 이상의 지식 탐험가들이 사랑하는 서비스' 
-                                    : 'Loved by over 900,000 knowledge seekers'}
+                                    ? '10000+ 건 이상의 자동화 투두 생성' 
+                                    : '10,000+ automated todos created'}
                             </p>
                         </div>
                     </div>
