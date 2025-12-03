@@ -10,14 +10,14 @@ export default function LandingPage() {
     return (
         <div className="min-h-screen bg-white">
             {/* 플로팅 내비게이션 바 */}
-            <nav className="fixed top-4 md:top-6 left-1/2 -translate-x-1/2 z-50 bg-white rounded-full border border-gray-200 px-4 md:px-6 py-2.5 md:py-3 w-[calc(100%-32px)] max-w-fit">
-                <div className="flex items-center justify-between md:gap-8">
+            <nav className="fixed top-3 md:top-6 left-1/2 -translate-x-1/2 z-50 bg-white rounded-full border border-gray-200 px-3 md:px-6 py-2 md:py-3 w-[calc(100%-24px)] md:w-auto md:max-w-fit">
+                <div className="flex items-center justify-between gap-2 md:gap-8">
                     {/* 로고 */}
-                    <Link href="/" className="flex items-center gap-2">
-                        <div className="w-7 h-7 rounded-lg bg-[var(--color-primary)] flex items-center justify-center text-white font-bold text-xs">
+                    <Link href="/" className="flex items-center gap-1.5 md:gap-2 flex-shrink-0">
+                        <div className="w-5 h-5 md:w-7 md:h-7 rounded-lg bg-[var(--color-primary)] flex items-center justify-center text-white font-bold text-[10px] md:text-xs">
                             T
                         </div>
-                        <span className="text-lg font-bold text-gray-900">to-dook</span>
+                        <span className="text-sm md:text-lg font-bold text-gray-900">to-dook</span>
                     </Link>
 
                     {/* 내비게이션 메뉴 - 데스크톱만 */}
@@ -36,7 +36,7 @@ export default function LandingPage() {
                     {/* 액션 버튼 */}
                     <Link 
                         href="/login"
-                        className="px-4 md:px-5 py-2 bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white text-sm font-medium rounded-full transition-all ml-4"
+                        className="px-3 md:px-5 py-1.5 md:py-2 bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white text-xs md:text-sm font-medium rounded-full transition-all flex-shrink-0"
                     >
                         {language === 'ko' ? '시작하기' : 'Get Started'}
                     </Link>
@@ -124,7 +124,7 @@ export default function LandingPage() {
                             <span className="text-lg font-bold text-gray-900">to-dook</span>
                         </div>
                         <p className="text-xs md:text-sm text-gray-500">
-                            © 2024 to-dook. All rights reserved.
+                            © 2025 to-dook. All rights reserved.
                         </p>
                     </div>
                 </div>
