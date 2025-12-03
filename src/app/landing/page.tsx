@@ -125,6 +125,23 @@ export default function LandingPage() {
                     </div>
                 </div>
             </footer>
+
+            {/* Product Hunt 배지 - 우측 하단 고정 */}
+            <div className="fixed bottom-4 right-4 z-40 hidden md:block">
+                <a 
+                    href="https://www.producthunt.com/products/to-dook?embed=true&utm_source=badge-featured&utm_medium=badge&utm_source=badge-to-dook" 
+                    target="_blank"
+                    rel="noopener noreferrer"
+                >
+                    <img 
+                        src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1045463&theme=light&t=1764772750837" 
+                        alt="To-Dook - AI-Powered Auto Generation to-do Application | Product Hunt" 
+                        style={{ width: '250px', height: '54px' }} 
+                        width="250" 
+                        height="54" 
+                    />
+                </a>
+            </div>
         </div>
     );
 }
