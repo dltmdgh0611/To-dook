@@ -14,7 +14,7 @@ export default function MainLayout() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const { language } = useLanguage();
-    const [isChatOpen, setIsChatOpen] = useState(true);
+    const [isChatOpen, setIsChatOpen] = useState(false);
     const [isMobile, setIsMobile] = useState(false);
     
     // 모바일 여부 확인
