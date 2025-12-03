@@ -9,6 +9,7 @@ export const metadata: Metadata = {
   description: "할 일 관리와 AI 채팅",
   icons: {
     icon: '/logo.png',
+    apple: '/logo.png',
   },
 };
 
