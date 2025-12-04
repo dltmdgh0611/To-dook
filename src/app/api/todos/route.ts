@@ -1,19 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { requireAuth } from '@/lib/api-helpers';
 import { prisma } from '@/lib/prisma';
 
 // GET: 모든 투두 조회
 export async function GET() {
   try {
-    const session = await getServerSession(authOptions);
-
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const { error, session } = await requireAuth();
+    if (error) return error;
 
     const todos = await prisma.todo.findMany({
-      where: { userId: session.user.id },
+      where: { userId: session!.user.id },
       orderBy: [
         { order: 'asc' },
         { createdAt: 'desc' },
@@ -30,23 +26,19 @@ export async function GET() {
 // POST: 새 투두 생성
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const { error, session } = await requireAuth();
+    if (error) return error;
 
     const body = await request.json();
     const { title, description, dueDate, priority, emoji, tag, tagColor, sources } = body;
 
-    // 현재 가장 작은 order 값 찾기 (새 투두를 맨 앞에 추가하기 위해)
-    const minOrderTodo = await prisma.todo.findFirst({
-      where: { userId: session.user.id },
-      orderBy: { order: 'asc' },
-      select: { order: true },
+    // 현재 가장 작은 order 값 찾기 (aggregate 사용으로 최적화)
+    const minOrderResult = await prisma.todo.aggregate({
+      where: { userId: session!.user.id },
+      _min: { order: true },
     });
     
-    const newOrder = minOrderTodo ? minOrderTodo.order - 1 : 0;
+    const newOrder = minOrderResult._min.order !== null ? minOrderResult._min.order - 1 : 0;
 
     // 빈 투두 생성 허용 (인라인 편집용)
     const todo = await prisma.todo.create({
@@ -60,7 +52,7 @@ export async function POST(request: NextRequest) {
         tagColor,
         sources: sources || null,
         order: newOrder,
-        userId: session.user.id,
+        userId: session!.user.id,
       },
     });
 
@@ -74,11 +66,8 @@ export async function POST(request: NextRequest) {
 // PATCH: 투두 업데이트
 export async function PATCH(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const { error, session } = await requireAuth();
+    if (error) return error;
 
     const body = await request.json();
     const { id, ...updates } = body;
@@ -87,25 +76,31 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: 'Todo ID is required' }, { status: 400 });
     }
 
-    // 권한 확인
+    // 먼저 권한 확인 (빠른 실패)
     const existing = await prisma.todo.findFirst({
       where: {
         id,
-        userId: session.user.id,
+        userId: session!.user.id,
       },
+      select: { id: true }, // 최소한의 데이터만 조회
     });
 
     if (!existing) {
       return NextResponse.json({ error: 'Todo not found' }, { status: 404 });
     }
 
+    // 권한 확인 후 업데이트
     const todo = await prisma.todo.update({
       where: { id },
       data: updates,
     });
 
     return NextResponse.json({ todo });
-  } catch (error) {
+  } catch (error: any) {
+    // Prisma 에러 처리
+    if (error.code === 'P2025') {
+      return NextResponse.json({ error: 'Todo not found' }, { status: 404 });
+    }
     console.error('Failed to update todo:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
@@ -114,11 +109,8 @@ export async function PATCH(request: NextRequest) {
 // DELETE: 투두 삭제
 export async function DELETE(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const { error, session } = await requireAuth();
+    if (error) return error;
 
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
@@ -127,21 +119,17 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'Todo ID is required' }, { status: 400 });
     }
 
-    // 권한 확인
-    const existing = await prisma.todo.findFirst({
+    // 권한 확인과 삭제를 한 번의 쿼리로 처리 (WHERE 절에 userId 포함)
+    const result = await prisma.todo.deleteMany({
       where: {
         id,
-        userId: session.user.id,
+        userId: session!.user.id, // 권한 확인 포함
       },
     });
 
-    if (!existing) {
+    if (result.count === 0) {
       return NextResponse.json({ error: 'Todo not found' }, { status: 404 });
     }
-
-    await prisma.todo.delete({
-      where: { id },
-    });
 
     return NextResponse.json({ success: true });
   } catch (error) {

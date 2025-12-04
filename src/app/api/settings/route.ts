@@ -1,25 +1,21 @@
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { requireAuth } from '@/lib/api-helpers';
 import { prisma } from '@/lib/prisma';
 
 export async function GET() {
   try {
-    const session = await getServerSession(authOptions);
-
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const { error, session } = await requireAuth();
+    if (error) return error;
 
     let setting = await prisma.setting.findUnique({
-      where: { userId: session.user.id },
+      where: { userId: session!.user.id },
     });
 
     // Create default settings if not exists
     if (!setting) {
       setting = await prisma.setting.create({
         data: {
-          userId: session.user.id,
+          userId: session!.user.id,
         },
       });
     }
