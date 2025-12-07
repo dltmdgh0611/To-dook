@@ -1,13 +1,12 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
-import { useSearchParams, useRouter } from 'next/navigation';
+import React, { useEffect, useState, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useLanguage } from '@/contexts/LanguageContext';
 
-export default function SuccessPage() {
+function SuccessContent() {
   const searchParams = useSearchParams();
-  const router = useRouter();
   const { language } = useLanguage();
   const [checkoutId, setCheckoutId] = useState<string | null>(null);
 
@@ -61,6 +60,18 @@ export default function SuccessPage() {
         </Link>
       </div>
     </div>
+  );
+}
+
+export default function SuccessPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="text-gray-500">Loading...</div>
+      </div>
+    }>
+      <SuccessContent />
+    </Suspense>
   );
 }
 

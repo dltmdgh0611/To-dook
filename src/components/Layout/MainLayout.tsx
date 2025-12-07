@@ -493,7 +493,9 @@ export default function MainLayout() {
                                                     if (POLAR_PRODUCT_ID) {
                                                         window.location.href = `/api/checkout?products=${encodeURIComponent(POLAR_PRODUCT_ID)}`;
                                                     } else {
-                                                        alert(getTranslation(language, 'productIdNotSet') || '제품 ID가 설정되지 않았습니다. src/lib/polar-config.ts 파일에 제품 ID를 입력해주세요.');
+                                                        alert(language === 'ko' 
+                                                            ? '제품 ID가 설정되지 않았습니다. 환경 변수 NEXT_PUBLIC_POLAR_PRODUCT_ID를 확인해주세요.' 
+                                                            : 'Product ID is not set. Please check NEXT_PUBLIC_POLAR_PRODUCT_ID environment variable.');
                                                     }
                                                 }}
                                                 className="w-full px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-3"
@@ -618,7 +620,9 @@ export default function MainLayout() {
                                         if (POLAR_PRODUCT_ID) {
                                             window.location.href = `/api/checkout?products=${encodeURIComponent(POLAR_PRODUCT_ID)}`;
                                         } else {
-                                            alert(getTranslation(language, 'productIdNotSet') || '제품 ID가 설정되지 않았습니다. src/lib/polar-config.ts 파일에 제품 ID를 입력해주세요.');
+                                            alert(language === 'ko' 
+                                                ? '제품 ID가 설정되지 않았습니다. 환경 변수 NEXT_PUBLIC_POLAR_PRODUCT_ID를 확인해주세요.' 
+                                                : 'Product ID is not set. Please check NEXT_PUBLIC_POLAR_PRODUCT_ID environment variable.');
                                         }
                                     }}
                                     className="w-full px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-3"
