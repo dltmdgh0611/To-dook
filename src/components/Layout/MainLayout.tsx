@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import TodoMain from '@/components/Todo/TodoMain';
 import ChatPanel from '@/components/Chat/ChatPanel';
 import SettingsModal from '@/components/Settings/SettingsModal';
+import SubscriptionModal from '@/components/Payment/SubscriptionModal';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { getTranslation } from '@/lib/i18n';
 import { POLAR_PRODUCT_ID } from '@/lib/polar-config';
@@ -49,6 +50,12 @@ export default function MainLayout() {
     const [onboardingChecked, setOnboardingChecked] = useState(false);
     const [displayName, setDisplayName] = useState('');
     const [nameInput, setNameInput] = useState('');
+    
+    // 구독 상태
+    const [subscriptionStatus, setSubscriptionStatus] = useState<'trial' | 'active' | 'cancelled' | 'expired'>('trial');
+    const [isSubscriptionActive, setIsSubscriptionActive] = useState(true);
+    const [subscriptionDaysRemaining, setSubscriptionDaysRemaining] = useState(7);
+    const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
     
     // 7일 무료체험 남은 일수 계산 (12월 9일까지)
     const calculateDaysRemaining = () => {
@@ -138,6 +145,31 @@ export default function MainLayout() {
         };
         checkOnboarding();
     }, [status, onboardingChecked]);
+
+    // 구독 상태 확인
+    useEffect(() => {
+        const checkSubscription = async () => {
+            if (status === 'authenticated') {
+                try {
+                    const response = await fetch('/api/subscription');
+                    if (response.ok) {
+                        const data = await response.json();
+                        setSubscriptionStatus(data.status);
+                        setIsSubscriptionActive(data.isActive);
+                        setSubscriptionDaysRemaining(data.daysRemaining);
+                        
+                        // 만료된 경우 모달 표시
+                        if (!data.isActive) {
+                            setShowSubscriptionModal(true);
+                        }
+                    }
+                } catch (error) {
+                    console.error('Failed to check subscription:', error);
+                }
+            }
+        };
+        checkSubscription();
+    }, [status]);
 
     const handleNameSubmit = async () => {
         if (!nameInput.trim()) return;
@@ -714,7 +746,7 @@ export default function MainLayout() {
             </div>
 
             {/* 7일 무료체험 배너 - 데스크톱: 왼쪽 아래 사이드바 옆 / 모바일: 숨김 */}
-            {!isMobile && onboardingStep === 0 && daysRemaining > 0 && (
+            {!isMobile && onboardingStep === 0 && subscriptionStatus === 'trial' && isSubscriptionActive && subscriptionDaysRemaining > 0 && (
                 <div className="fixed bottom-4 left-[72px] z-40 animate-fadeIn">
                     <div className="bg-[var(--color-primary)] text-white px-4 py-2.5 rounded-full shadow-lg flex items-center gap-3">
                         <div className="flex items-center gap-2">
@@ -722,10 +754,17 @@ export default function MainLayout() {
                             <span className="text-sm font-medium">{getTranslation(language, 'freeTrial')}</span>
                         </div>
                         <div className="w-px h-4 bg-white/30" />
-                        <span className="text-xs text-white/80">{getTranslation(language, 'daysRemaining', { days: daysRemaining.toString() })}</span>
+                        <span className="text-xs text-white/80">{getTranslation(language, 'daysRemaining', { days: subscriptionDaysRemaining.toString() })}</span>
                     </div>
                 </div>
             )}
+
+            {/* 구독 필요 모달 - 체험 만료 시 표시 */}
+            <SubscriptionModal 
+                isOpen={showSubscriptionModal && !isSubscriptionActive}
+                daysRemaining={subscriptionDaysRemaining}
+                status={subscriptionStatus as 'trial' | 'expired' | 'cancelled'}
+            />
 
             {/* Settings Modal */}
             <SettingsModal
