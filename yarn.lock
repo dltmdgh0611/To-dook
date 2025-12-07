@@ -872,6 +872,29 @@
   resolved "https://registry.npmmirror.com/@pkgjs/parseargs/-/parseargs-0.11.0.tgz"
   integrity sha512-+1VkjdD0QBLPodGrJUeqarH8VAIvQODIbwh9XpP5Syisf7YoQgsJKPNFoqqLQlu+VQ/tVSshMR6loPMn8U+dPg==
 
+"@polar-sh/adapter-utils@0.4.0":
+  version "0.4.0"
+  resolved "https://registry.npmmirror.com/@polar-sh/adapter-utils/-/adapter-utils-0.4.0.tgz"
+  integrity sha512-HfiJgAfCfE7qs9L8o3KgDzToUz3Z0sfvoX6ZnyMnfldX8ERnYxwQN79OsQq+dGKoak7+VhhJQvf348qop+5OKQ==
+  dependencies:
+    "@polar-sh/sdk" "^0.41.5"
+
+"@polar-sh/nextjs@^0.9.0":
+  version "0.9.0"
+  resolved "https://registry.npmmirror.com/@polar-sh/nextjs/-/nextjs-0.9.0.tgz"
+  integrity sha512-ehlKBqa8GftFFyHM+o9pV7wQNLBzMPELXmVm1BUoF30ZvAp0Wx63/3m7hmqEgnM9HGzlxoA0BNG6D/pq4VaFyQ==
+  dependencies:
+    "@polar-sh/adapter-utils" "0.4.0"
+    "@polar-sh/sdk" "^0.41.5"
+
+"@polar-sh/sdk@^0.41.5":
+  version "0.41.5"
+  resolved "https://registry.npmmirror.com/@polar-sh/sdk/-/sdk-0.41.5.tgz"
+  integrity sha512-E+VoVV+WvebZKmj+KZ/fj1byBZbG7J8hHyzYD9kktvAToigPM19sywo2tFCHeb44aWGCVACMOP8r31e6je7dxA==
+  dependencies:
+    standardwebhooks "^1.0.0"
+    zod "^3.25.65 || ^4.0.0"
+
 "@polka/url@^1.0.0-next.24":
   version "1.0.0-next.29"
   resolved "https://registry.npmmirror.com/@polka/url/-/url-1.0.0-next.29.tgz"
@@ -1044,6 +1067,11 @@
   version "1.2.12"
   resolved "https://registry.npmmirror.com/@speed-highlight/core/-/core-1.2.12.tgz"
   integrity sha512-uilwrK0Ygyri5dToHYdZSjcvpS2ZwX0w5aSt3GCEN9hrjxWCoeV4Z2DTXuxjwbntaLQIEEAlCeNQss5SoHvAEA==
+
+"@stablelib/base64@^1.0.0":
+  version "1.0.1"
+  resolved "https://registry.npmmirror.com/@stablelib/base64/-/base64-1.0.1.tgz"
+  integrity sha512-1bnPQqSxSuc3Ii6MhBysoWCg58j97aUjuCSZrGSmDxNqtytIi0k8utUenAwTZN4V5mXXYGsVUI9zeBqy+jBOSQ==
 
 "@supabase/auth-js@2.84.0":
   version "2.84.0"
@@ -3074,6 +3102,11 @@ fast-npm-meta@^0.4.7:
   resolved "https://registry.npmmirror.com/fast-npm-meta/-/fast-npm-meta-0.4.7.tgz"
   integrity sha512-aZU3i3eRcSb2NCq8i6N6IlyiTyF6vqAqzBGl2NBF6ngNx/GIqfYbkLDIKZ4z4P0o/RmtsFnVqHwdrSm13o4tnQ==
 
+fast-sha256@^1.3.0:
+  version "1.3.0"
+  resolved "https://registry.npmmirror.com/fast-sha256/-/fast-sha256-1.3.0.tgz"
+  integrity sha512-n11RGP/lrWEFI/bWdygLxhI+pVeo1ZYIVwvvPkW7azl/rOy+F3HYRZ2K5zeE9mmkhQppyv9sQFx0JM9UabnpPQ==
+
 fastq@^1.6.0:
   version "1.19.1"
   resolved "https://registry.npmmirror.com/fastq/-/fastq-1.19.1.tgz"
@@ -4353,7 +4386,7 @@ next-auth@^4, next-auth@^4.18.7, next-auth@^4.24.13:
     preact-render-to-string "^5.1.19"
     uuid "^8.3.2"
 
-"next@^12.2.5 || ^13 || ^14 || ^15 || ^16", "next@>= 13", next@16.0.3:
+"next@^12.2.5 || ^13 || ^14 || ^15 || ^16", "next@^15.0.0 || ^16.0.0", "next@>= 13", next@16.0.3:
   version "16.0.3"
   resolved "https://registry.npmmirror.com/next/-/next-16.0.3.tgz"
   integrity sha512-Ka0/iNBblPFcIubTA1Jjh6gvwqfjrGq1Y2MTI5lbjeLIAfmC+p5bQmojpRZqgHHVu5cG4+qdIiwXiBSm/8lZ3w==
@@ -5877,6 +5910,14 @@ standard-as-callback@^2.1.0:
   resolved "https://registry.npmmirror.com/standard-as-callback/-/standard-as-callback-2.1.0.tgz"
   integrity sha512-qoRRSyROncaz1z0mvYqIE4lCd9p2R90i6GxW3uZv5ucSu8tU7B5HXUP1gG8pVZsYNVaXjk8ClXHPttLyxAL48A==
 
+standardwebhooks@^1.0.0:
+  version "1.0.0"
+  resolved "https://registry.npmmirror.com/standardwebhooks/-/standardwebhooks-1.0.0.tgz"
+  integrity sha512-BbHGOQK9olHPMvQNHWul6MYlrRTAOKn03rOe4A8O3CLWhNf4YHBqq2HJKKC+sfqpxiBY52pNeesD6jIiLDz8jg==
+  dependencies:
+    "@stablelib/base64" "^1.0.0"
+    fast-sha256 "^1.3.0"
+
 statuses@^2.0.1, statuses@~2.0.2:
   version "2.0.2"
   resolved "https://registry.npmmirror.com/statuses/-/statuses-2.0.2.tgz"
@@ -6880,7 +6921,7 @@ zip-stream@^6.0.1:
   resolved "https://registry.npmmirror.com/zod-validation-error/-/zod-validation-error-4.0.2.tgz"
   integrity sha512-Q6/nZLe6jxuU80qb/4uJ4t5v2VEZ44lzQjPDhYJNztRQ4wyWc6VF3D3Kb/fAuPetZQnhS3hnajCf9CsWesghLQ==
 
-"zod@^3.25 || ^4.0", "zod@^3.25.0 || ^4.0.0":
+"zod@^3.25 || ^4.0", "zod@^3.25.0 || ^4.0.0", "zod@^3.25.65 || ^4.0.0":
   version "4.1.12"
   resolved "https://registry.npmmirror.com/zod/-/zod-4.1.12.tgz"
   integrity sha512-JInaHOamG8pt5+Ey8kGmdcAcg3OL9reK8ltczgHTAwNhMys/6ThXHityHxVV2p3fkw/c+MAvBHFVYHFZDmjMCQ==

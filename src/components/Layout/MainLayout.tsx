@@ -8,6 +8,7 @@ import ChatPanel from '@/components/Chat/ChatPanel';
 import SettingsModal from '@/components/Settings/SettingsModal';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { getTranslation } from '@/lib/i18n';
+import { POLAR_PRODUCT_ID } from '@/lib/polar-config';
 
 export default function MainLayout() {
     const { data: session, status } = useSession();
@@ -484,7 +485,19 @@ export default function MainLayout() {
                                             <p className="text-xs text-gray-500">{userEmail}</p>
                                         </div>
                                         <div className="py-1">
-                                            <button className="w-full px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-3">
+                                            <button 
+                                                onClick={() => {
+                                                    setIsProfileOpen(false);
+                                                    // Polar Checkout으로 바로 리다이렉트 (Polar가 자동으로 결제 UI 제공)
+                                                    // products 파라미터는 필수이므로 설정 파일에서 가져옴
+                                                    if (POLAR_PRODUCT_ID) {
+                                                        window.location.href = `/api/checkout?products=${encodeURIComponent(POLAR_PRODUCT_ID)}`;
+                                                    } else {
+                                                        alert(getTranslation(language, 'productIdNotSet') || '제품 ID가 설정되지 않았습니다. src/lib/polar-config.ts 파일에 제품 ID를 입력해주세요.');
+                                                    }
+                                                }}
+                                                className="w-full px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-3"
+                                            >
                                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
                                                     <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 01-1.043 3.296 3.745 3.745 0 01-3.296 1.043A3.745 3.745 0 0112 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 01-3.296-1.043 3.745 3.745 0 01-1.043-3.296A3.745 3.745 0 013 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 011.043-3.296 3.746 3.746 0 013.296-1.043A3.746 3.746 0 0112 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 013.296 1.043 3.746 3.746 0 011.043 3.296A3.745 3.745 0 0121 12z" />
                                                 </svg>
@@ -597,7 +610,19 @@ export default function MainLayout() {
                                 <p className="text-xs text-gray-500">{userEmail}</p>
                             </div>
                             <div className="py-1">
-                                <button className="w-full px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-3">
+                                <button 
+                                    onClick={() => {
+                                        setIsProfileOpen(false);
+                                        // Polar Checkout으로 바로 리다이렉트 (Polar가 자동으로 결제 UI 제공)
+                                        // products 파라미터는 필수이므로 설정 파일에서 가져옴
+                                        if (POLAR_PRODUCT_ID) {
+                                            window.location.href = `/api/checkout?products=${encodeURIComponent(POLAR_PRODUCT_ID)}`;
+                                        } else {
+                                            alert(getTranslation(language, 'productIdNotSet') || '제품 ID가 설정되지 않았습니다. src/lib/polar-config.ts 파일에 제품 ID를 입력해주세요.');
+                                        }
+                                    }}
+                                    className="w-full px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-3"
+                                >
                                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
                                         <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 01-1.043 3.296 3.745 3.745 0 01-3.296 1.043A3.745 3.745 0 0112 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 01-3.296-1.043 3.745 3.745 0 01-1.043-3.296A3.745 3.745 0 013 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 011.043-3.296 3.746 3.746 0 013.296-1.043A3.746 3.746 0 0112 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 013.296 1.043 3.746 3.746 0 011.043 3.296A3.745 3.745 0 0121 12z" />
                                     </svg>
@@ -699,8 +724,8 @@ export default function MainLayout() {
             )}
 
             {/* Settings Modal */}
-            <SettingsModal 
-                isOpen={isSettingsOpen} 
+            <SettingsModal
+                isOpen={isSettingsOpen}
                 onClose={() => setIsSettingsOpen(false)}
                 initialTab={settingsInitialTab}
             />
