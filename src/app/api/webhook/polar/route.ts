@@ -1,9 +1,14 @@
 // Polar 웹훅 처리 - 결제/구독 이벤트 수신
 import { Webhooks } from "@polar-sh/nextjs";
 import { prisma } from "@/lib/prisma";
+import { NextRequest, NextResponse } from "next/server";
 
-export const POST = Webhooks({
-  webhookSecret: process.env.POLAR_WEBHOOK_SECRET!,
+// 웹훅 시크릿이 설정되어 있으면 Polar SDK 사용, 아니면 직접 처리
+const webhookSecret = process.env.POLAR_WEBHOOK_SECRET;
+
+// Polar SDK를 사용한 웹훅 핸들러
+const polarWebhookHandler = webhookSecret ? Webhooks({
+  webhookSecret: webhookSecret,
   
   onPayload: async (payload) => {
     console.log('Polar webhook received:', payload.type);
@@ -139,5 +144,91 @@ export const POST = Webhooks({
       console.log(`User ${user.email} subscription expired`);
     }
   },
-});
+}) : null;
+
+// 웹훅 시크릿 없이 직접 처리하는 핸들러
+async function handleWebhookDirectly(req: NextRequest) {
+  try {
+    const payload = await req.json();
+    console.log('Polar webhook received (direct):', payload.type, payload);
+    
+    // checkout.updated 이벤트 처리
+    if (payload.type === 'checkout.updated' && payload.data?.status === 'succeeded') {
+      const customerEmail = payload.data.customer_email || payload.data.customerEmail;
+      const customerId = payload.data.customer_id || payload.data.customerId;
+      
+      if (customerEmail) {
+        const expiresAt = new Date();
+        expiresAt.setDate(expiresAt.getDate() + 30);
+        
+        await prisma.user.updateMany({
+          where: { email: customerEmail },
+          data: {
+            subscriptionStatus: 'active',
+            subscriptionStartedAt: new Date(),
+            subscriptionExpiresAt: expiresAt,
+            polarCustomerId: customerId || undefined,
+          },
+        });
+        
+        console.log(`User ${customerEmail} subscription activated`);
+      }
+    }
+    
+    // subscription 이벤트 처리
+    if (payload.type?.startsWith('subscription.')) {
+      const customerId = payload.data?.customer_id || payload.data?.customerId;
+      const subscriptionId = payload.data?.id;
+      
+      if (customerId || subscriptionId) {
+        const user = await prisma.user.findFirst({
+          where: {
+            OR: [
+              { polarCustomerId: customerId },
+              { polarSubscriptionId: subscriptionId },
+            ].filter(Boolean),
+          },
+        });
+        
+        if (user) {
+          let status = user.subscriptionStatus;
+          
+          if (payload.type === 'subscription.created' || payload.type === 'subscription.active') {
+            status = 'active';
+          } else if (payload.type === 'subscription.canceled') {
+            status = 'cancelled';
+          } else if (payload.type === 'subscription.revoked') {
+            status = 'expired';
+          }
+          
+          const expiresAt = payload.data?.current_period_end || payload.data?.currentPeriodEnd;
+          
+          await prisma.user.update({
+            where: { id: user.id },
+            data: {
+              subscriptionStatus: status,
+              subscriptionExpiresAt: expiresAt ? new Date(expiresAt) : undefined,
+              polarSubscriptionId: subscriptionId || undefined,
+            },
+          });
+          
+          console.log(`User ${user.email} subscription updated to ${status}`);
+        }
+      }
+    }
+    
+    return NextResponse.json({ received: true });
+  } catch (error) {
+    console.error('Webhook error:', error);
+    return NextResponse.json({ error: 'Webhook processing failed' }, { status: 500 });
+  }
+}
+
+// POST 핸들러 - 웹훅 시크릿 유무에 따라 분기
+export async function POST(req: NextRequest) {
+  if (polarWebhookHandler) {
+    return polarWebhookHandler(req);
+  }
+  return handleWebhookDirectly(req);
+}
 
