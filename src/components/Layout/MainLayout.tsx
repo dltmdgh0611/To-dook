@@ -520,14 +520,15 @@ export default function MainLayout() {
                                             <button 
                                                 onClick={() => {
                                                     setIsProfileOpen(false);
-                                                    // Polar Checkout으로 바로 리다이렉트 (Polar가 자동으로 결제 UI 제공)
-                                                    // products 파라미터는 필수이므로 설정 파일에서 가져옴
-                                                    if (POLAR_PRODUCT_ID) {
-                                                        window.location.href = `/api/checkout?products=${encodeURIComponent(POLAR_PRODUCT_ID)}`;
+                                                    if (isSubscriptionActive && subscriptionStatus === 'active') {
+                                                        // 프리미엄 사용자: 설정의 프리미엄 탭으로 이동
+                                                        setSettingsInitialTab('general');
+                                                        setIsSettingsOpen(true);
                                                     } else {
-                                                        alert(language === 'ko' 
-                                                            ? '제품 ID가 설정되지 않았습니다. 환경 변수 NEXT_PUBLIC_POLAR_PRODUCT_ID를 확인해주세요.' 
-                                                            : 'Product ID is not set. Please check NEXT_PUBLIC_POLAR_PRODUCT_ID environment variable.');
+                                                        // 비구독자: 결제 페이지로 이동
+                                                        if (POLAR_PRODUCT_ID) {
+                                                            window.location.href = `/api/checkout?products=${encodeURIComponent(POLAR_PRODUCT_ID)}`;
+                                                        }
                                                     }
                                                 }}
                                                 className="w-full px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-3"
@@ -535,7 +536,12 @@ export default function MainLayout() {
                                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
                                                     <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 01-1.043 3.296 3.745 3.745 0 01-3.296 1.043A3.745 3.745 0 0112 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 01-3.296-1.043 3.745 3.745 0 01-1.043-3.296A3.745 3.745 0 013 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 011.043-3.296 3.746 3.746 0 013.296-1.043A3.746 3.746 0 0112 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 013.296 1.043 3.746 3.746 0 011.043 3.296A3.745 3.745 0 0121 12z" />
                                                 </svg>
-                                                <span>{getTranslation(language, 'upgradePlan')}</span>
+                                                <span>
+                                                    {isSubscriptionActive && subscriptionStatus === 'active'
+                                                        ? (language === 'ko' ? '프리미엄 ✓' : 'Premium ✓')
+                                                        : getTranslation(language, 'upgradePlan')
+                                                    }
+                                                </span>
                                             </button>
                                             <button 
                                                 onClick={() => {
@@ -647,14 +653,15 @@ export default function MainLayout() {
                                 <button 
                                     onClick={() => {
                                         setIsProfileOpen(false);
-                                        // Polar Checkout으로 바로 리다이렉트 (Polar가 자동으로 결제 UI 제공)
-                                        // products 파라미터는 필수이므로 설정 파일에서 가져옴
-                                        if (POLAR_PRODUCT_ID) {
-                                            window.location.href = `/api/checkout?products=${encodeURIComponent(POLAR_PRODUCT_ID)}`;
+                                        if (isSubscriptionActive && subscriptionStatus === 'active') {
+                                            // 프리미엄 사용자: 설정의 프리미엄 탭으로 이동
+                                            setSettingsInitialTab('general');
+                                            setIsSettingsOpen(true);
                                         } else {
-                                            alert(language === 'ko' 
-                                                ? '제품 ID가 설정되지 않았습니다. 환경 변수 NEXT_PUBLIC_POLAR_PRODUCT_ID를 확인해주세요.' 
-                                                : 'Product ID is not set. Please check NEXT_PUBLIC_POLAR_PRODUCT_ID environment variable.');
+                                            // 비구독자: 결제 페이지로 이동
+                                            if (POLAR_PRODUCT_ID) {
+                                                window.location.href = `/api/checkout?products=${encodeURIComponent(POLAR_PRODUCT_ID)}`;
+                                            }
                                         }
                                     }}
                                     className="w-full px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-3"
@@ -662,7 +669,12 @@ export default function MainLayout() {
                                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
                                         <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 01-1.043 3.296 3.745 3.745 0 01-3.296 1.043A3.745 3.745 0 0112 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 01-3.296-1.043 3.745 3.745 0 01-1.043-3.296A3.745 3.745 0 013 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 011.043-3.296 3.746 3.746 0 013.296-1.043A3.746 3.746 0 0112 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 013.296 1.043 3.746 3.746 0 011.043 3.296A3.745 3.745 0 0121 12z" />
                                     </svg>
-                                    <span>{getTranslation(language, 'upgradePlan')}</span>
+                                    <span>
+                                        {isSubscriptionActive && subscriptionStatus === 'active'
+                                            ? (language === 'ko' ? '프리미엄 ✓' : 'Premium ✓')
+                                            : getTranslation(language, 'upgradePlan')
+                                        }
+                                    </span>
                                 </button>
                                 <button 
                                     onClick={() => {

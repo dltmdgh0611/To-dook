@@ -96,6 +96,10 @@ export const translations = {
     permissionsSaved: '권한 설정이 저장되었습니다.',
     permissionsSaveFailed: '권한 설정 저장에 실패했습니다.',
     
+    // 구독
+    subscriptionCancelled: '구독이 취소되었습니다. 현재 결제 기간이 끝날 때까지 서비스를 이용할 수 있습니다.',
+    subscriptionCancelFailed: '구독 취소에 실패했습니다.',
+    
     // 계정 설정
     accountInfo: '계정 정보',
     name: '이름',
@@ -223,6 +227,10 @@ export const translations = {
     savePermissions: 'Save Permissions',
     permissionsSaved: 'Permissions have been saved.',
     permissionsSaveFailed: 'Failed to save permissions.',
+    
+    // Subscription
+    subscriptionCancelled: 'Subscription cancelled. You can continue using the service until the end of your current billing period.',
+    subscriptionCancelFailed: 'Failed to cancel subscription.',
     
     // Account Settings
     accountInfo: 'Account Information',

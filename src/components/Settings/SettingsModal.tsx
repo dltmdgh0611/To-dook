@@ -6,7 +6,7 @@ import GmailAuthGuideModal from './GmailAuthGuideModal';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { getTranslation } from '@/lib/i18n';
 
-type SettingTab = 'general' | 'integrations' | 'permissions' | 'account';
+type SettingTab = 'general' | 'integrations' | 'permissions' | 'subscription' | 'account';
 
 interface SettingData {
   gmailConnected: boolean;
@@ -18,6 +18,14 @@ interface SettingData {
   notionWorkspace: string | null;
   notionApiKey: string | null;
   notionPages: string[] | null;
+}
+
+interface SubscriptionData {
+  status: 'trial' | 'active' | 'cancelled' | 'expired';
+  isActive: boolean;
+  daysRemaining: number;
+  subscriptionStartedAt: string | null;
+  subscriptionExpiresAt: string | null;
 }
 
 interface SlackChannel {
@@ -59,13 +67,58 @@ export default function SettingsModal({ isOpen, onClose, initialTab = 'integrati
   
   // Gmail 연동 안내 모달
   const [showGmailGuide, setShowGmailGuide] = useState(false);
+  
+  // 구독 상태
+  const [subscription, setSubscription] = useState<SubscriptionData | null>(null);
+  const [loadingSubscription, setLoadingSubscription] = useState(false);
+  const [cancelConfirm, setCancelConfirm] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
       fetchSettings();
+      fetchSubscription();
       setActiveTab(initialTab);
     }
   }, [isOpen, initialTab]);
+
+  const fetchSubscription = async () => {
+    setLoadingSubscription(true);
+    try {
+      const response = await fetch('/api/subscription');
+      if (response.ok) {
+        const data = await response.json();
+        setSubscription(data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch subscription:', error);
+    } finally {
+      setLoadingSubscription(false);
+    }
+  };
+
+  const handleCancelSubscription = async () => {
+    if (!cancelConfirm) {
+      setCancelConfirm(true);
+      return;
+    }
+    
+    setLoading(true);
+    try {
+      const response = await fetch('/api/subscription/cancel', {
+        method: 'POST',
+      });
+      if (response.ok) {
+        await fetchSubscription();
+        alert(getTranslation(language, 'subscriptionCancelled'));
+      }
+    } catch (error) {
+      console.error('Failed to cancel subscription:', error);
+      alert(getTranslation(language, 'subscriptionCancelFailed'));
+    } finally {
+      setLoading(false);
+      setCancelConfirm(false);
+    }
+  };
 
   useEffect(() => {
     if (activeTab === 'permissions' && settings) {
@@ -272,8 +325,19 @@ export default function SettingsModal({ isOpen, onClose, initialTab = 'integrati
             <div className="px-5 pb-5 border-b border-gray-200 mb-4">
               <div className="flex items-center gap-2 mb-1">
                 <span className="font-semibold text-gray-900">{userName}</span>
-                <span className="text-[10px] px-2 py-0.5 bg-[#e8f5e9] text-[#4caf50] rounded-full font-medium">
-                  Free
+                <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${
+                  subscription?.isActive && subscription?.status === 'active'
+                    ? 'bg-[#e3f2fd] text-[#1976d2]'
+                    : subscription?.status === 'trial' && subscription?.isActive
+                    ? 'bg-purple-100 text-purple-600'
+                    : 'bg-[#e8f5e9] text-[#4caf50]'
+                }`}>
+                  {subscription?.isActive && subscription?.status === 'active'
+                    ? 'Premium'
+                    : subscription?.status === 'trial' && subscription?.isActive
+                    ? 'Trial'
+                    : 'Free'
+                  }
                 </span>
               </div>
               <p className="text-xs text-gray-500">{userEmail}</p>
@@ -312,6 +376,16 @@ export default function SettingsModal({ isOpen, onClose, initialTab = 'integrati
                 {getTranslation(language, 'permissions')}
               </button>
               <button
+                onClick={() => setActiveTab('subscription')}
+                className={`w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                  activeTab === 'subscription' 
+                    ? 'bg-white text-gray-900 shadow-sm' 
+                    : 'text-gray-600 hover:bg-white/50'
+                }`}
+              >
+                {language === 'ko' ? '프리미엄' : 'Premium'}
+              </button>
+              <button
                 onClick={() => setActiveTab('account')}
                 className={`w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
                   activeTab === 'account' 
@@ -329,8 +403,19 @@ export default function SettingsModal({ isOpen, onClose, initialTab = 'integrati
             {/* User Info */}
             <div className="flex items-center gap-2 mb-3">
               <span className="font-semibold text-gray-900 text-sm">{userName}</span>
-              <span className="text-[10px] px-2 py-0.5 bg-[#e8f5e9] text-[#4caf50] rounded-full font-medium">
-                Free
+              <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${
+                subscription?.isActive && subscription?.status === 'active'
+                  ? 'bg-[#e3f2fd] text-[#1976d2]'
+                  : subscription?.status === 'trial' && subscription?.isActive
+                  ? 'bg-purple-100 text-purple-600'
+                  : 'bg-[#e8f5e9] text-[#4caf50]'
+              }`}>
+                {subscription?.isActive && subscription?.status === 'active'
+                  ? 'Premium'
+                  : subscription?.status === 'trial' && subscription?.isActive
+                  ? 'Trial'
+                  : 'Free'
+                }
               </span>
             </div>
             {/* Tab Navigation */}
@@ -364,6 +449,16 @@ export default function SettingsModal({ isOpen, onClose, initialTab = 'integrati
                 }`}
               >
                 {getTranslation(language, 'permissions')}
+              </button>
+              <button
+                onClick={() => setActiveTab('subscription')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors ${
+                  activeTab === 'subscription' 
+                    ? 'bg-white text-gray-900 shadow-sm' 
+                    : 'text-gray-600'
+                }`}
+              >
+                {language === 'ko' ? '프리미엄' : 'Premium'}
               </button>
               <button
                 onClick={() => setActiveTab('account')}
@@ -703,6 +798,189 @@ export default function SettingsModal({ isOpen, onClose, initialTab = 'integrati
                     >
                       {loading ? getTranslation(language, 'saving') : getTranslation(language, 'savePermissions')}
                     </button>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {activeTab === 'subscription' && (
+              <div>
+                <h2 className="text-lg md:text-xl font-semibold text-gray-900 mb-2">
+                  {language === 'ko' ? '프리미엄 구독' : 'Premium Subscription'}
+                </h2>
+                <p className="text-xs md:text-sm text-gray-500 mb-4 md:mb-8">
+                  {language === 'ko' ? '구독 상태를 확인하고 관리하세요.' : 'Check and manage your subscription status.'}
+                </p>
+
+                {loadingSubscription ? (
+                  <div className="flex items-center justify-center py-12">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+                  </div>
+                ) : subscription ? (
+                  <div className="space-y-4">
+                    {/* 현재 구독 상태 */}
+                    <div className="border border-gray-200 rounded-xl p-4 md:p-5">
+                      <div className="flex items-center justify-between mb-4">
+                        <h3 className="font-medium text-gray-900 text-sm md:text-base">
+                          {language === 'ko' ? '현재 플랜' : 'Current Plan'}
+                        </h3>
+                        <span className={`text-xs px-3 py-1 rounded-full font-medium ${
+                          subscription.status === 'active' 
+                            ? 'bg-[#e8f5e9] text-[#4caf50]'
+                            : subscription.status === 'trial'
+                            ? 'bg-blue-100 text-blue-600'
+                            : subscription.status === 'cancelled'
+                            ? 'bg-yellow-100 text-yellow-600'
+                            : 'bg-gray-100 text-gray-600'
+                        }`}>
+                          {subscription.status === 'active' && (language === 'ko' ? '프리미엄 활성' : 'Premium Active')}
+                          {subscription.status === 'trial' && (language === 'ko' ? '체험 중' : 'Trial')}
+                          {subscription.status === 'cancelled' && (language === 'ko' ? '취소됨' : 'Cancelled')}
+                          {subscription.status === 'expired' && (language === 'ko' ? '만료됨' : 'Expired')}
+                        </span>
+                      </div>
+                      
+                      <div className="space-y-3">
+                        {subscription.isActive && subscription.daysRemaining > 0 && (
+                          <div className="flex justify-between text-sm">
+                            <span className="text-gray-500">
+                              {language === 'ko' ? '남은 기간' : 'Days Remaining'}
+                            </span>
+                            <span className="text-gray-900 font-medium">
+                              {subscription.daysRemaining === -1 
+                                ? (language === 'ko' ? '무제한' : 'Unlimited')
+                                : `${subscription.daysRemaining}${language === 'ko' ? '일' : ' days'}`
+                              }
+                            </span>
+                          </div>
+                        )}
+                        
+                        {subscription.subscriptionExpiresAt && (
+                          <div className="flex justify-between text-sm">
+                            <span className="text-gray-500">
+                              {language === 'ko' ? '만료일' : 'Expires On'}
+                            </span>
+                            <span className="text-gray-900">
+                              {new Date(subscription.subscriptionExpiresAt).toLocaleDateString(
+                                language === 'ko' ? 'ko-KR' : 'en-US',
+                                { year: 'numeric', month: 'long', day: 'numeric' }
+                              )}
+                            </span>
+                          </div>
+                        )}
+                        
+                        {subscription.subscriptionStartedAt && (
+                          <div className="flex justify-between text-sm">
+                            <span className="text-gray-500">
+                              {language === 'ko' ? '시작일' : 'Started On'}
+                            </span>
+                            <span className="text-gray-900">
+                              {new Date(subscription.subscriptionStartedAt).toLocaleDateString(
+                                language === 'ko' ? 'ko-KR' : 'en-US',
+                                { year: 'numeric', month: 'long', day: 'numeric' }
+                              )}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* 프리미엄 기능 */}
+                    {subscription.isActive && (
+                      <div className="border border-green-200 rounded-xl p-4 md:p-5 bg-green-50">
+                        <h3 className="font-medium text-green-800 mb-3 text-sm md:text-base flex items-center gap-2">
+                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 01-1.043 3.296 3.745 3.745 0 01-3.296 1.043A3.745 3.745 0 0112 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 01-3.296-1.043 3.745 3.745 0 01-1.043-3.296A3.745 3.745 0 013 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 011.043-3.296 3.746 3.746 0 013.296-1.043A3.746 3.746 0 0112 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 013.296 1.043 3.746 3.746 0 011.043 3.296A3.745 3.745 0 0121 12z" />
+                          </svg>
+                          {language === 'ko' ? '프리미엄 기능 활성화됨' : 'Premium Features Enabled'}
+                        </h3>
+                        <ul className="space-y-2 text-sm text-green-700">
+                          <li className="flex items-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                            </svg>
+                            {language === 'ko' ? '무제한 투두 생성' : 'Unlimited Todos'}
+                          </li>
+                          <li className="flex items-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                            </svg>
+                            {language === 'ko' ? 'AI 투두 자동 생성' : 'AI Todo Generation'}
+                          </li>
+                          <li className="flex items-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                            </svg>
+                            {language === 'ko' ? '이메일/슬랙/노션 연동' : 'Email/Slack/Notion Integration'}
+                          </li>
+                        </ul>
+                      </div>
+                    )}
+
+                    {/* 구독 안내 (비활성 상태) */}
+                    {!subscription.isActive && (
+                      <div className="border border-gray-200 rounded-xl p-4 md:p-5">
+                        <h3 className="font-medium text-gray-900 mb-3 text-sm md:text-base">
+                          {language === 'ko' ? '프리미엄으로 업그레이드' : 'Upgrade to Premium'}
+                        </h3>
+                        <p className="text-sm text-gray-600 mb-4">
+                          {language === 'ko' 
+                            ? '월 $4.99로 모든 프리미엄 기능을 이용하세요. 7일 무료 체험도 가능합니다.'
+                            : 'Get all premium features for $4.99/month. Start with a 7-day free trial.'}
+                        </p>
+                        <button
+                          onClick={() => {
+                            const productId = '059ba064-2ab9-4219-a66a-1615e9c4af1c';
+                            window.location.href = `/api/checkout?products=${encodeURIComponent(productId)}`;
+                          }}
+                          className="w-full py-3 bg-[var(--color-primary)] text-white rounded-lg text-sm font-medium hover:bg-[var(--color-primary-hover)] transition-colors"
+                        >
+                          {language === 'ko' ? '지금 구독하기' : 'Subscribe Now'}
+                        </button>
+                      </div>
+                    )}
+
+                    {/* 구독 취소 (활성 상태일 때만) */}
+                    {subscription.isActive && subscription.status === 'active' && (
+                      <div className="border border-gray-200 rounded-xl p-4 md:p-5">
+                        <h3 className="font-medium text-gray-700 mb-2 text-sm md:text-base">
+                          {language === 'ko' ? '구독 관리' : 'Manage Subscription'}
+                        </h3>
+                        <p className="text-xs text-gray-500 mb-4">
+                          {language === 'ko' 
+                            ? '구독을 취소하면 현재 결제 기간이 끝날 때까지 서비스를 이용할 수 있습니다.'
+                            : 'If you cancel, you can still use the service until the end of your current billing period.'}
+                        </p>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={handleCancelSubscription}
+                            disabled={loading}
+                            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                              cancelConfirm 
+                                ? 'bg-red-600 text-white hover:bg-red-700' 
+                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                            }`}
+                          >
+                            {cancelConfirm 
+                              ? (language === 'ko' ? '정말 취소하기' : 'Confirm Cancel')
+                              : (language === 'ko' ? '구독 취소' : 'Cancel Subscription')
+                            }
+                          </button>
+                          {cancelConfirm && (
+                            <button
+                              onClick={() => setCancelConfirm(false)}
+                              className="px-4 py-2 rounded-lg text-sm font-medium bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors"
+                            >
+                              {language === 'ko' ? '아니오' : 'No'}
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-gray-500">
+                    {language === 'ko' ? '구독 정보를 불러올 수 없습니다.' : 'Unable to load subscription info.'}
                   </div>
                 )}
               </div>
