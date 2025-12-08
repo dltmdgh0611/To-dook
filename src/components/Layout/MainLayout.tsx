@@ -157,11 +157,7 @@ export default function MainLayout() {
                         setSubscriptionStatus(data.status);
                         setIsSubscriptionActive(data.isActive);
                         setSubscriptionDaysRemaining(data.daysRemaining);
-                        
-                        // 만료된 경우 모달 표시
-                        if (!data.isActive) {
-                            setShowSubscriptionModal(true);
-                        }
+                        // 자동 모달은 뜨지 않음 - 버튼 클릭 시에만 표시
                     }
                 } catch (error) {
                     console.error('Failed to check subscription:', error);
@@ -170,6 +166,15 @@ export default function MainLayout() {
         };
         checkSubscription();
     }, [status]);
+
+    // 프리미엄 필요 액션 핸들러 - none 또는 expired일 때 모달 표시
+    const handlePremiumAction = (action: () => void) => {
+        if (subscriptionStatus === 'none' || subscriptionStatus === 'expired') {
+            setShowSubscriptionModal(true);
+        } else {
+            action();
+        }
+    };
 
     const handleNameSubmit = async () => {
         if (!nameInput.trim()) return;
@@ -357,7 +362,7 @@ export default function MainLayout() {
                     
                     {/* 액션 버튼들 */}
                     <button 
-                        onClick={() => onboardingStep === 0 && setAddTodoTrigger(prev => prev + 1)}
+                        onClick={() => onboardingStep === 0 && handlePremiumAction(() => setAddTodoTrigger(prev => prev + 1))}
                         className={`w-10 h-10 md:w-9 md:h-9 rounded-full bg-[var(--color-primary)] flex items-center justify-center text-white shadow-md transition-all ${onboardingStep === 0 ? 'hover:bg-[var(--color-primary-hover)] hover:shadow-lg' : 'opacity-50 cursor-not-allowed'}`}
                         title={getTranslation(language, 'newTodo')}
                         disabled={onboardingStep > 0}
@@ -368,7 +373,7 @@ export default function MainLayout() {
                     </button>
                     <div className="relative">
                         <button 
-                            onClick={() => onboardingStep === 0 && setGenerateTrigger(prev => prev + 1)}
+                            onClick={() => onboardingStep === 0 && handlePremiumAction(() => setGenerateTrigger(prev => prev + 1))}
                             className={`w-10 h-10 md:w-9 md:h-9 rounded-full border-2 border-[var(--color-primary)] flex items-center justify-center transition-all ${onboardingStep === 3 ? 'bg-white ring-4 ring-white/50 shadow-lg' : onboardingStep === 0 ? 'hover:bg-[var(--color-primary)]/10' : 'opacity-50 cursor-not-allowed'}`}
                             title={getTranslation(language, 'generateWithAI')}
                             disabled={onboardingStep > 0 && onboardingStep !== 3}
@@ -771,11 +776,10 @@ export default function MainLayout() {
                 </div>
             )}
 
-            {/* 구독 필요 모달 - 체험 만료 또는 결제 전 시 표시 */}
+            {/* 프리미엄 필요 모달 - 버튼 클릭 시 표시 */}
             <SubscriptionModal 
-                isOpen={showSubscriptionModal && !isSubscriptionActive}
-                daysRemaining={subscriptionDaysRemaining}
-                status={subscriptionStatus as 'none' | 'trial' | 'expired' | 'cancelled'}
+                isOpen={showSubscriptionModal}
+                onClose={() => setShowSubscriptionModal(false)}
             />
 
             {/* Settings Modal */}

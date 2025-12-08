@@ -519,48 +519,6 @@ export default function SettingsModal({ isOpen, onClose, initialTab = 'integrati
                 <p className="text-xs md:text-sm text-gray-500 mb-4 md:mb-8">{getTranslation(language, 'connectionsDesc')}</p>
 
                 <div className="space-y-3 md:space-y-4">
-                  {/* Gmail */}
-                  <div className="border border-gray-200 rounded-xl p-3 md:p-4">
-                    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-                      <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 md:w-10 md:h-10 rounded-lg bg-white border border-gray-200 flex items-center justify-center flex-shrink-0">
-                          <svg viewBox="0 0 24 24" className="w-5 h-5 md:w-6 md:h-6">
-                            <path fill="#EA4335" d="M22 6.25V18.5c0 1.38-1.12 2.5-2.5 2.5h-15C3.12 21 2 19.88 2 18.5V6.25L12 13l10-6.75z"/>
-                            <path fill="#FBBC05" d="M2 6.25V5.5C2 4.12 3.12 3 4.5 3h15c.69 0 1.31.28 1.76.73L12 13 2 6.25z"/>
-                            <path fill="#34A853" d="M21.26 3.73c.45.45.74 1.08.74 1.77v.75L12 13 2 6.25V5.5c0-.69.28-1.31.73-1.76L12 13l9.26-9.27z"/>
-                            <path fill="#4285F4" d="M2 6.25V18.5c0 1.38 1.12 2.5 2.5 2.5h1v-7.25L2 6.25zM22 6.25V18.5c0 1.38-1.12 2.5-2.5 2.5h-1v-7.25l3.5-7.5z"/>
-                          </svg>
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <h3 className="font-medium text-gray-900 text-sm md:text-base">{getTranslation(language, 'gmail')}</h3>
-                          <p className="text-xs text-gray-500 truncate">
-                            {settings?.gmailConnected 
-                              ? settings.gmailEmail || getTranslation(language, 'gmailConnected')
-                              : getTranslation(language, 'gmailDesc')}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2 ml-12 md:ml-0">
-                        {settings?.gmailConnected && (
-                          <span className="text-xs px-2 py-1 bg-[#e8f5e9] text-[#4caf50] rounded-full font-medium hidden md:inline">
-                            {getTranslation(language, 'gmailConnected')}
-                          </span>
-                        )}
-                        <button
-                          onClick={() => settings?.gmailConnected ? handleDisconnect('gmail') : setShowGmailGuide(true)}
-                          disabled={loading}
-                          className={`px-3 md:px-4 py-1.5 md:py-2 rounded-lg text-xs md:text-sm font-medium transition-colors ${
-                            settings?.gmailConnected
-                              ? 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                              : 'bg-[var(--color-primary)] text-white hover:bg-[var(--color-primary-hover)]'
-                          }`}
-                        >
-                          {settings?.gmailConnected ? getTranslation(language, 'disconnect') : getTranslation(language, 'connect')}
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-
                   {/* Slack */}
                   <div className="border border-gray-200 rounded-xl p-3 md:p-4">
                     <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
@@ -690,6 +648,48 @@ export default function SettingsModal({ isOpen, onClose, initialTab = 'integrati
                         {settings?.notionApiKey && (
                           <p className="text-xs text-green-600 mt-2">{getTranslation(language, 'apiKeySaved')}</p>
                         )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Gmail - 맨 아래 */}
+                  <div className="border border-gray-200 rounded-xl p-3 md:p-4">
+                    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                      <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 md:w-10 md:h-10 rounded-lg bg-white border border-gray-200 flex items-center justify-center flex-shrink-0">
+                          <svg viewBox="0 0 24 24" className="w-5 h-5 md:w-6 md:h-6">
+                            <path fill="#EA4335" d="M22 6.25V18.5c0 1.38-1.12 2.5-2.5 2.5h-15C3.12 21 2 19.88 2 18.5V6.25L12 13l10-6.75z"/>
+                            <path fill="#FBBC05" d="M2 6.25V5.5C2 4.12 3.12 3 4.5 3h15c.69 0 1.31.28 1.76.73L12 13 2 6.25z"/>
+                            <path fill="#34A853" d="M21.26 3.73c.45.45.74 1.08.74 1.77v.75L12 13 2 6.25V5.5c0-.69.28-1.31.73-1.76L12 13l9.26-9.27z"/>
+                            <path fill="#4285F4" d="M2 6.25V18.5c0 1.38 1.12 2.5 2.5 2.5h1v-7.25L2 6.25zM22 6.25V18.5c0 1.38-1.12 2.5-2.5 2.5h-1v-7.25l3.5-7.5z"/>
+                          </svg>
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <h3 className="font-medium text-gray-900 text-sm md:text-base">{getTranslation(language, 'gmail')}</h3>
+                          <p className="text-xs text-gray-500 truncate">
+                            {settings?.gmailConnected 
+                              ? settings.gmailEmail || getTranslation(language, 'gmailConnected')
+                              : getTranslation(language, 'gmailDesc')}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 ml-12 md:ml-0">
+                        {settings?.gmailConnected && (
+                          <span className="text-xs px-2 py-1 bg-[#e8f5e9] text-[#4caf50] rounded-full font-medium hidden md:inline">
+                            {getTranslation(language, 'gmailConnected')}
+                          </span>
+                        )}
+                        <button
+                          onClick={() => settings?.gmailConnected ? handleDisconnect('gmail') : setShowGmailGuide(true)}
+                          disabled={loading}
+                          className={`px-3 md:px-4 py-1.5 md:py-2 rounded-lg text-xs md:text-sm font-medium transition-colors ${
+                            settings?.gmailConnected
+                              ? 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                              : 'bg-[var(--color-primary)] text-white hover:bg-[var(--color-primary-hover)]'
+                          }`}
+                        >
+                          {settings?.gmailConnected ? getTranslation(language, 'disconnect') : getTranslation(language, 'connect')}
+                        </button>
                       </div>
                     </div>
                   </div>
