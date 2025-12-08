@@ -21,7 +21,7 @@ interface SettingData {
 }
 
 interface SubscriptionData {
-  status: 'trial' | 'active' | 'cancelled' | 'expired';
+  status: 'none' | 'trial' | 'active' | 'cancelled' | 'expired';
   isActive: boolean;
   daysRemaining: number;
   subscriptionStartedAt: string | null;
@@ -831,12 +831,15 @@ export default function SettingsModal({ isOpen, onClose, initialTab = 'integrati
                             ? 'bg-blue-100 text-blue-600'
                             : subscription.status === 'cancelled'
                             ? 'bg-yellow-100 text-yellow-600'
+                            : subscription.status === 'expired'
+                            ? 'bg-red-100 text-red-600'
                             : 'bg-gray-100 text-gray-600'
                         }`}>
                           {subscription.status === 'active' && (language === 'ko' ? '프리미엄 활성' : 'Premium Active')}
                           {subscription.status === 'trial' && (language === 'ko' ? '7일 무료 체험 중' : '7-Day Trial')}
                           {subscription.status === 'cancelled' && (language === 'ko' ? '취소됨' : 'Cancelled')}
                           {subscription.status === 'expired' && (language === 'ko' ? '만료됨' : 'Expired')}
+                          {subscription.status === 'none' && (language === 'ko' ? '결제 전' : 'Not Subscribed')}
                         </span>
                       </div>
                       

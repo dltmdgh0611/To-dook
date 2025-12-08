@@ -52,7 +52,7 @@ export default function MainLayout() {
     const [nameInput, setNameInput] = useState('');
     
     // 구독 상태
-    const [subscriptionStatus, setSubscriptionStatus] = useState<'trial' | 'active' | 'cancelled' | 'expired'>('trial');
+    const [subscriptionStatus, setSubscriptionStatus] = useState<'none' | 'trial' | 'active' | 'cancelled' | 'expired'>('none');
     const [isSubscriptionActive, setIsSubscriptionActive] = useState(true);
     const [subscriptionDaysRemaining, setSubscriptionDaysRemaining] = useState(7);
     const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
@@ -771,11 +771,11 @@ export default function MainLayout() {
                 </div>
             )}
 
-            {/* 구독 필요 모달 - 체험 만료 시 표시 */}
+            {/* 구독 필요 모달 - 체험 만료 또는 결제 전 시 표시 */}
             <SubscriptionModal 
                 isOpen={showSubscriptionModal && !isSubscriptionActive}
                 daysRemaining={subscriptionDaysRemaining}
-                status={subscriptionStatus as 'trial' | 'expired' | 'cancelled'}
+                status={subscriptionStatus as 'none' | 'trial' | 'expired' | 'cancelled'}
             />
 
             {/* Settings Modal */}

@@ -7,7 +7,7 @@ import { POLAR_PRODUCT_ID } from '@/lib/polar-config';
 interface SubscriptionModalProps {
   isOpen: boolean;
   daysRemaining?: number;
-  status: 'trial' | 'expired' | 'cancelled';
+  status: 'none' | 'trial' | 'expired' | 'cancelled';
 }
 
 export default function SubscriptionModal({ isOpen, daysRemaining = 0, status }: SubscriptionModalProps) {

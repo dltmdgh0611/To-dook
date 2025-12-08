@@ -52,10 +52,10 @@ model User {
   updatedAt     DateTime  @updatedAt
   
   // 구독 관련 필드
-  subscriptionStatus    String    @default("trial") // 'trial' | 'active' | 'cancelled' | 'expired'
-  subscriptionStartedAt DateTime  @default(now())   // 구독/체험 시작일
-  subscriptionExpiresAt DateTime?                    // 구독 만료일 (체험: 7일 후, 구독: 다음 결제일)
-  polarCustomerId       String?                      // Polar 고객 ID
+  subscriptionStatus    String    @default("none") // 'none' | 'trial' | 'active' | 'cancelled' | 'expired'
+  subscriptionStartedAt DateTime?                   // 구독/체험 시작일 (결제 전에는 null)
+  subscriptionExpiresAt DateTime?                   // 구독 만료일 (체험: 7일 후, 구독: 다음 결제일)
+  polarCustomerId       String?                     // Polar 고객 ID
   polarSubscriptionId   String?                      // Polar 구독 ID
 }
 

@@ -31,50 +31,82 @@ export async function GET() {
     let isActive = false;
     let daysRemaining = 0;
     
-    if (user.subscriptionExpiresAt) {
-      const expiresAt = new Date(user.subscriptionExpiresAt);
-      
-      if (expiresAt > now) {
-        // 아직 유효
-        isActive = true;
-        daysRemaining = Math.ceil((expiresAt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-      } else {
-        // 만료됨
-        status = 'expired';
-        isActive = false;
-        
-        // DB 업데이트 (만료 상태로)
-        if (user.subscriptionStatus !== 'expired') {
+    // expired 상태는 무조건 비활성화 (만료일과 관계없이)
+    if (status === 'expired') {
+      isActive = false;
+      daysRemaining = 0;
+    }
+    // none 상태는 결제 전 상태로 비활성화
+    else if (status === 'none') {
+      isActive = false;
+      daysRemaining = 0;
+    }
+    // cancelled 상태는 만료일까지 사용 가능
+    else if (status === 'cancelled') {
+      if (user.subscriptionExpiresAt) {
+        const expiresAt = new Date(user.subscriptionExpiresAt);
+        if (expiresAt > now) {
+          isActive = true;
+          daysRemaining = Math.ceil((expiresAt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+        } else {
+          // 취소된 구독도 만료일이 지나면 expired로 변경
+          status = 'expired';
+          isActive = false;
           await prisma.user.update({
             where: { email: session.user.email },
             data: { subscriptionStatus: 'expired' },
           });
         }
-      }
-    } else if (status === 'trial') {
-      // 구독 시작일 기준 7일 체험
-      const trialEnd = new Date(user.subscriptionStartedAt);
-      trialEnd.setDate(trialEnd.getDate() + 7);
-      
-      if (trialEnd > now) {
-        isActive = true;
-        daysRemaining = Math.ceil((trialEnd.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
       } else {
-        status = 'expired';
         isActive = false;
+      }
+    }
+    // trial 또는 active 상태는 만료일 체크
+    else if (status === 'trial' || status === 'active') {
+      if (user.subscriptionExpiresAt) {
+        const expiresAt = new Date(user.subscriptionExpiresAt);
         
-        // DB 업데이트
-        if (user.subscriptionStatus !== 'expired') {
+        if (expiresAt > now) {
+          // 아직 유효
+          isActive = true;
+          daysRemaining = Math.ceil((expiresAt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+        } else {
+          // 만료됨
+          status = 'expired';
+          isActive = false;
+          
+          // DB 업데이트 (만료 상태로)
           await prisma.user.update({
             where: { email: session.user.email },
             data: { subscriptionStatus: 'expired' },
           });
         }
+      } else if (status === 'trial' && user.subscriptionStartedAt) {
+        // trial 상태인데 만료일이 없으면 시작일 기준 7일 체험
+        const trialEnd = new Date(user.subscriptionStartedAt);
+        trialEnd.setDate(trialEnd.getDate() + 7);
+        
+        if (trialEnd > now) {
+          isActive = true;
+          daysRemaining = Math.ceil((trialEnd.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+        } else {
+          status = 'expired';
+          isActive = false;
+          
+          // DB 업데이트
+          await prisma.user.update({
+            where: { email: session.user.email },
+            data: { subscriptionStatus: 'expired' },
+          });
+        }
+      } else if (status === 'active') {
+        // 활성 구독이지만 만료일이 없는 경우 (평생 구독 등)
+        isActive = true;
+        daysRemaining = -1; // 무제한
+      } else {
+        // trial인데 시작일도 없으면 비활성화
+        isActive = false;
       }
-    } else if (status === 'active') {
-      // 활성 구독이지만 만료일이 없는 경우 (평생 구독 등)
-      isActive = true;
-      daysRemaining = -1; // 무제한
     }
     
     return NextResponse.json({
