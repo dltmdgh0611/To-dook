@@ -146,74 +146,167 @@ const polarWebhookHandler = webhookSecret ? Webhooks({
   },
 }) : null;
 
+// 사용자 찾기 헬퍼 함수 - 여러 방법으로 사용자 매칭 시도
+async function findUserByMultipleMethods(data: {
+  customerExternalId?: string;
+  metadata?: { user_id?: string; user_email?: string };
+  customerEmail?: string;
+  customerId?: string;
+  subscriptionId?: string;
+}) {
+  const { customerExternalId, metadata, customerEmail, customerId, subscriptionId } = data;
+  
+  // 1순위: customer_external_id (우리 DB의 user.id)
+  if (customerExternalId) {
+    const user = await prisma.user.findUnique({
+      where: { id: customerExternalId },
+    });
+    if (user) {
+      console.log(`Found user by external_id: ${user.email}`);
+      return user;
+    }
+  }
+  
+  // 2순위: metadata에서 user_id
+  if (metadata?.user_id) {
+    const user = await prisma.user.findUnique({
+      where: { id: metadata.user_id },
+    });
+    if (user) {
+      console.log(`Found user by metadata.user_id: ${user.email}`);
+      return user;
+    }
+  }
+  
+  // 3순위: metadata에서 user_email
+  if (metadata?.user_email) {
+    const user = await prisma.user.findUnique({
+      where: { email: metadata.user_email },
+    });
+    if (user) {
+      console.log(`Found user by metadata.user_email: ${user.email}`);
+      return user;
+    }
+  }
+  
+  // 4순위: Polar customer ID
+  if (customerId) {
+    const user = await prisma.user.findFirst({
+      where: { polarCustomerId: customerId },
+    });
+    if (user) {
+      console.log(`Found user by polarCustomerId: ${user.email}`);
+      return user;
+    }
+  }
+  
+  // 5순위: Polar subscription ID
+  if (subscriptionId) {
+    const user = await prisma.user.findFirst({
+      where: { polarSubscriptionId: subscriptionId },
+    });
+    if (user) {
+      console.log(`Found user by polarSubscriptionId: ${user.email}`);
+      return user;
+    }
+  }
+  
+  // 6순위: 이메일 (마지막 수단)
+  if (customerEmail) {
+    const user = await prisma.user.findUnique({
+      where: { email: customerEmail },
+    });
+    if (user) {
+      console.log(`Found user by email: ${user.email}`);
+      return user;
+    }
+  }
+  
+  return null;
+}
+
 // 웹훅 시크릿 없이 직접 처리하는 핸들러
 async function handleWebhookDirectly(req: NextRequest) {
   try {
     const payload = await req.json();
-    console.log('Polar webhook received (direct):', payload.type, payload);
+    console.log('Polar webhook received (direct):', payload.type, JSON.stringify(payload.data, null, 2));
     
     // checkout.updated 이벤트 처리
     if (payload.type === 'checkout.updated' && payload.data?.status === 'succeeded') {
       const customerEmail = payload.data.customer_email || payload.data.customerEmail;
       const customerId = payload.data.customer_id || payload.data.customerId;
+      const customerExternalId = payload.data.customer_external_id || payload.data.customerExternalId;
+      const metadata = payload.data.metadata;
       
-      if (customerEmail) {
+      // 여러 방법으로 사용자 찾기
+      const user = await findUserByMultipleMethods({
+        customerExternalId,
+        metadata,
+        customerEmail,
+        customerId,
+      });
+      
+      if (user) {
+        // 7일 후 만료일 계산 (트라이얼)
         const expiresAt = new Date();
-        expiresAt.setDate(expiresAt.getDate() + 30);
+        expiresAt.setDate(expiresAt.getDate() + 7); // 7일 트라이얼
         
-        await prisma.user.updateMany({
-          where: { email: customerEmail },
+        await prisma.user.update({
+          where: { id: user.id },
           data: {
-            subscriptionStatus: 'active',
+            subscriptionStatus: 'trial', // 첫 결제는 트라이얼로 시작
             subscriptionStartedAt: new Date(),
             subscriptionExpiresAt: expiresAt,
             polarCustomerId: customerId || undefined,
           },
         });
         
-        console.log(`User ${customerEmail} subscription activated`);
+        console.log(`User ${user.email} trial activated (7 days)`);
+      } else {
+        console.error('Could not find user for checkout:', { customerEmail, customerId, customerExternalId, metadata });
       }
     }
     
     // subscription 이벤트 처리
     if (payload.type?.startsWith('subscription.')) {
       const customerId = payload.data?.customer_id || payload.data?.customerId;
+      const customerExternalId = payload.data?.customer_external_id || payload.data?.customerExternalId;
       const subscriptionId = payload.data?.id;
+      const metadata = payload.data?.metadata;
       
-      if (customerId || subscriptionId) {
-        const user = await prisma.user.findFirst({
-          where: {
-            OR: [
-              { polarCustomerId: customerId },
-              { polarSubscriptionId: subscriptionId },
-            ].filter(Boolean),
+      const user = await findUserByMultipleMethods({
+        customerExternalId,
+        metadata,
+        customerId,
+        subscriptionId,
+      });
+      
+      if (user) {
+        let status = user.subscriptionStatus;
+        
+        if (payload.type === 'subscription.created' || payload.type === 'subscription.active') {
+          status = 'active';
+        } else if (payload.type === 'subscription.canceled') {
+          status = 'cancelled';
+        } else if (payload.type === 'subscription.revoked') {
+          status = 'expired';
+        }
+        
+        const expiresAt = payload.data?.current_period_end || payload.data?.currentPeriodEnd;
+        
+        await prisma.user.update({
+          where: { id: user.id },
+          data: {
+            subscriptionStatus: status,
+            subscriptionExpiresAt: expiresAt ? new Date(expiresAt) : undefined,
+            polarSubscriptionId: subscriptionId || undefined,
+            polarCustomerId: customerId || undefined,
           },
         });
         
-        if (user) {
-          let status = user.subscriptionStatus;
-          
-          if (payload.type === 'subscription.created' || payload.type === 'subscription.active') {
-            status = 'active';
-          } else if (payload.type === 'subscription.canceled') {
-            status = 'cancelled';
-          } else if (payload.type === 'subscription.revoked') {
-            status = 'expired';
-          }
-          
-          const expiresAt = payload.data?.current_period_end || payload.data?.currentPeriodEnd;
-          
-          await prisma.user.update({
-            where: { id: user.id },
-            data: {
-              subscriptionStatus: status,
-              subscriptionExpiresAt: expiresAt ? new Date(expiresAt) : undefined,
-              polarSubscriptionId: subscriptionId || undefined,
-            },
-          });
-          
-          console.log(`User ${user.email} subscription updated to ${status}`);
-        }
+        console.log(`User ${user.email} subscription updated to ${status}`);
+      } else {
+        console.error('Could not find user for subscription event:', { customerId, customerExternalId, subscriptionId });
       }
     }
     

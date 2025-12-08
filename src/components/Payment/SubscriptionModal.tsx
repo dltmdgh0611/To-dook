@@ -17,7 +17,7 @@ export default function SubscriptionModal({ isOpen, daysRemaining = 0, status }:
   
   const handleSubscribe = () => {
     if (POLAR_PRODUCT_ID) {
-      window.location.href = `/api/checkout?products=${encodeURIComponent(POLAR_PRODUCT_ID)}`;
+      window.location.href = `/api/checkout/session?products=${encodeURIComponent(POLAR_PRODUCT_ID)}`;
     }
   };
   

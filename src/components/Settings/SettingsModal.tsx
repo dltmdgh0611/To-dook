@@ -834,7 +834,7 @@ export default function SettingsModal({ isOpen, onClose, initialTab = 'integrati
                             : 'bg-gray-100 text-gray-600'
                         }`}>
                           {subscription.status === 'active' && (language === 'ko' ? '프리미엄 활성' : 'Premium Active')}
-                          {subscription.status === 'trial' && (language === 'ko' ? '체험 중' : 'Trial')}
+                          {subscription.status === 'trial' && (language === 'ko' ? '7일 무료 체험 중' : '7-Day Trial')}
                           {subscription.status === 'cancelled' && (language === 'ko' ? '취소됨' : 'Cancelled')}
                           {subscription.status === 'expired' && (language === 'ko' ? '만료됨' : 'Expired')}
                         </span>
@@ -844,7 +844,10 @@ export default function SettingsModal({ isOpen, onClose, initialTab = 'integrati
                         {subscription.isActive && subscription.daysRemaining > 0 && (
                           <div className="flex justify-between text-sm">
                             <span className="text-gray-500">
-                              {language === 'ko' ? '남은 기간' : 'Days Remaining'}
+                              {subscription.status === 'trial' 
+                                ? (language === 'ko' ? '체험 남은 기간' : 'Trial Days Left')
+                                : (language === 'ko' ? '결제일까지' : 'Until Next Billing')
+                              }
                             </span>
                             <span className="text-gray-900 font-medium">
                               {subscription.daysRemaining === -1 
@@ -858,7 +861,10 @@ export default function SettingsModal({ isOpen, onClose, initialTab = 'integrati
                         {subscription.subscriptionExpiresAt && (
                           <div className="flex justify-between text-sm">
                             <span className="text-gray-500">
-                              {language === 'ko' ? '만료일' : 'Expires On'}
+                              {subscription.status === 'trial'
+                                ? (language === 'ko' ? '첫 결제 예정일' : 'First Billing Date')
+                                : (language === 'ko' ? '다음 결제일' : 'Next Billing Date')
+                              }
                             </span>
                             <span className="text-gray-900">
                               {new Date(subscription.subscriptionExpiresAt).toLocaleDateString(
@@ -869,10 +875,19 @@ export default function SettingsModal({ isOpen, onClose, initialTab = 'integrati
                           </div>
                         )}
                         
+                        {subscription.isActive && (
+                          <div className="flex justify-between text-sm">
+                            <span className="text-gray-500">
+                              {language === 'ko' ? '월간 요금' : 'Monthly Price'}
+                            </span>
+                            <span className="text-gray-900 font-medium">$4.99/월</span>
+                          </div>
+                        )}
+                        
                         {subscription.subscriptionStartedAt && (
                           <div className="flex justify-between text-sm">
                             <span className="text-gray-500">
-                              {language === 'ko' ? '시작일' : 'Started On'}
+                              {language === 'ko' ? '가입일' : 'Joined On'}
                             </span>
                             <span className="text-gray-900">
                               {new Date(subscription.subscriptionStartedAt).toLocaleDateString(
@@ -884,6 +899,44 @@ export default function SettingsModal({ isOpen, onClose, initialTab = 'integrati
                         )}
                       </div>
                     </div>
+                    
+                    {/* 구독 일정 안내 (체험 중일 때만) */}
+                    {subscription.status === 'trial' && subscription.isActive && (
+                      <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                        <h3 className="font-medium text-blue-800 mb-2 text-sm flex items-center gap-2">
+                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
+                          </svg>
+                          {language === 'ko' ? '구독 일정' : 'Subscription Schedule'}
+                        </h3>
+                        <ul className="text-sm text-blue-700 space-y-2">
+                          <li className="flex items-start gap-2">
+                            <span className="w-5 h-5 rounded-full bg-green-500 text-white text-xs flex items-center justify-center flex-shrink-0 mt-0.5">✓</span>
+                            <span>{language === 'ko' ? '현재: 7일 무료 체험 이용 중' : 'Now: Using 7-day free trial'}</span>
+                          </li>
+                          <li className="flex items-start gap-2">
+                            <span className="w-5 h-5 rounded-full bg-blue-500 text-white text-xs flex items-center justify-center flex-shrink-0 mt-0.5">2</span>
+                            <span>
+                              {subscription.subscriptionExpiresAt 
+                                ? (language === 'ko' 
+                                    ? `${new Date(subscription.subscriptionExpiresAt).toLocaleDateString('ko-KR', { month: 'long', day: 'numeric' })}: 첫 결제 ($4.99)`
+                                    : `${new Date(subscription.subscriptionExpiresAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}: First charge ($4.99)`)
+                                : (language === 'ko' ? '체험 종료 후: 첫 결제 ($4.99)' : 'After trial: First charge ($4.99)')
+                              }
+                            </span>
+                          </li>
+                          <li className="flex items-start gap-2">
+                            <span className="w-5 h-5 rounded-full bg-gray-400 text-white text-xs flex items-center justify-center flex-shrink-0 mt-0.5">3</span>
+                            <span>{language === 'ko' ? '이후: 매월 자동 갱신 ($4.99/월)' : 'After: Monthly auto-renewal ($4.99/mo)'}</span>
+                          </li>
+                        </ul>
+                        <p className="text-xs text-blue-600 mt-3">
+                          {language === 'ko' 
+                            ? '💡 체험 기간 내 취소하면 결제되지 않습니다.'
+                            : '💡 Cancel during trial to avoid charges.'}
+                        </p>
+                      </div>
+                    )}
 
                     {/* 프리미엄 기능 */}
                     {subscription.isActive && (
@@ -931,7 +984,7 @@ export default function SettingsModal({ isOpen, onClose, initialTab = 'integrati
                         <button
                           onClick={() => {
                             const productId = '059ba064-2ab9-4219-a66a-1615e9c4af1c';
-                            window.location.href = `/api/checkout?products=${encodeURIComponent(productId)}`;
+                            window.location.href = `/api/checkout/session?products=${encodeURIComponent(productId)}`;
                           }}
                           className="w-full py-3 bg-[var(--color-primary)] text-white rounded-lg text-sm font-medium hover:bg-[var(--color-primary-hover)] transition-colors"
                         >

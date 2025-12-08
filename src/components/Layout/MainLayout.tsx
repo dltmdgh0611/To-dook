@@ -527,7 +527,7 @@ export default function MainLayout() {
                                                     } else {
                                                         // 비구독자: 결제 페이지로 이동
                                                         if (POLAR_PRODUCT_ID) {
-                                                            window.location.href = `/api/checkout?products=${encodeURIComponent(POLAR_PRODUCT_ID)}`;
+                                                            window.location.href = `/api/checkout/session?products=${encodeURIComponent(POLAR_PRODUCT_ID)}`;
                                                         }
                                                     }
                                                 }}
@@ -660,7 +660,7 @@ export default function MainLayout() {
                                         } else {
                                             // 비구독자: 결제 페이지로 이동
                                             if (POLAR_PRODUCT_ID) {
-                                                window.location.href = `/api/checkout?products=${encodeURIComponent(POLAR_PRODUCT_ID)}`;
+                                                window.location.href = `/api/checkout/session?products=${encodeURIComponent(POLAR_PRODUCT_ID)}`;
                                             }
                                         }
                                     }}
