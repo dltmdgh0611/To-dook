@@ -58,12 +58,12 @@ function SuccessContent() {
   }, [activated, router]);
 
   return (
-    <div className="min-h-screen bg-white flex items-center justify-center px-4">
+    <div className="min-h-screen bg-[var(--background-secondary)] flex items-center justify-center px-4">
       <div className="max-w-md w-full text-center space-y-6">
         {activating ? (
           <>
-            <div className="w-16 h-16 mx-auto bg-blue-100 rounded-full flex items-center justify-center">
-              <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+            <div className="w-16 h-16 mx-auto bg-[var(--color-primary)] rounded-2xl flex items-center justify-center">
+              <div className="w-8 h-8 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
             </div>
             <div>
               <h1 className="text-2xl font-bold text-gray-900 mb-2">
@@ -76,8 +76,8 @@ function SuccessContent() {
           </>
         ) : error ? (
           <>
-            <div className="w-16 h-16 mx-auto bg-yellow-100 rounded-full flex items-center justify-center">
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-8 h-8 text-yellow-600">
+            <div className="w-16 h-16 mx-auto bg-gray-100 rounded-2xl flex items-center justify-center">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-8 h-8 text-gray-500">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
               </svg>
             </div>
@@ -93,21 +93,21 @@ function SuccessContent() {
             </div>
             <button
               onClick={() => router.push('/')}
-              className="inline-block px-6 py-3 bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white font-semibold rounded-full transition-all"
+              className="inline-block px-6 py-3 bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white font-semibold rounded-xl transition-all"
             >
               {language === 'ko' ? '홈으로 돌아가기' : 'Return to Home'}
             </button>
           </>
         ) : (
           <>
-            <div className="w-16 h-16 mx-auto bg-green-100 rounded-full flex items-center justify-center">
+            <div className="w-16 h-16 mx-auto bg-[var(--color-primary)] rounded-2xl flex items-center justify-center">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 fill="none"
                 viewBox="0 0 24 24"
-                strokeWidth={2}
+                strokeWidth={2.5}
                 stroke="currentColor"
-                className="w-8 h-8 text-green-600"
+                className="w-8 h-8 text-white"
               >
                 <path
                   strokeLinecap="round"
@@ -129,21 +129,26 @@ function SuccessContent() {
             </div>
 
             {/* 7일 트라이얼 + 월간 결제 안내 */}
-            <div className="bg-gray-50 rounded-xl p-4 text-left">
-              <h3 className="font-semibold text-gray-900 mb-2 text-sm">
-                {language === 'ko' ? '📅 구독 일정' : '📅 Subscription Schedule'}
+            <div className="bg-white rounded-xl p-4 text-left shadow-sm border border-gray-100">
+              <h3 className="font-semibold text-gray-900 mb-3 text-sm flex items-center gap-2">
+                <div className="w-6 h-6 rounded-lg bg-[var(--color-primary)] flex items-center justify-center flex-shrink-0">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-3.5 h-3.5 text-white">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
+                  </svg>
+                </div>
+                {language === 'ko' ? '구독 일정' : 'Subscription Schedule'}
               </h3>
-              <ul className="text-sm text-gray-600 space-y-1">
-                <li className="flex items-center gap-2">
-                  <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+              <ul className="text-sm text-gray-600 space-y-2.5">
+                <li className="flex items-center gap-2.5">
+                  <span className="w-5 h-5 rounded-full bg-[var(--color-primary)] text-white text-xs flex items-center justify-center flex-shrink-0">✓</span>
                   {language === 'ko' ? '오늘: 7일 무료 체험 시작' : 'Today: 7-day free trial starts'}
                 </li>
-                <li className="flex items-center gap-2">
-                  <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
+                <li className="flex items-center gap-2.5">
+                  <span className="w-5 h-5 rounded-full bg-gray-200 text-gray-600 text-xs flex items-center justify-center flex-shrink-0">2</span>
                   {language === 'ko' ? '7일 후: 첫 결제 ($4.99)' : 'In 7 days: First charge ($4.99)'}
                 </li>
-                <li className="flex items-center gap-2">
-                  <span className="w-2 h-2 bg-gray-400 rounded-full"></span>
+                <li className="flex items-center gap-2.5">
+                  <span className="w-5 h-5 rounded-full bg-gray-200 text-gray-600 text-xs flex items-center justify-center flex-shrink-0">3</span>
                   {language === 'ko' ? '이후: 매월 자동 갱신' : 'After: Monthly auto-renewal'}
                 </li>
               </ul>
@@ -158,7 +163,7 @@ function SuccessContent() {
             <div className="space-y-2">
               <button
                 onClick={() => router.push('/')}
-                className="w-full px-6 py-3 bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white font-semibold rounded-full transition-all"
+                className="w-full px-6 py-3 bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white font-semibold rounded-xl transition-all"
               >
                 {language === 'ko' ? '시작하기' : 'Get Started'}
               </button>
@@ -176,7 +181,7 @@ function SuccessContent() {
 export default function SuccessPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-white flex items-center justify-center">
+      <div className="min-h-screen bg-[var(--background-secondary)] flex items-center justify-center">
         <div className="text-gray-500">Loading...</div>
       </div>
     }>
@@ -184,4 +189,3 @@ export default function SuccessPage() {
     </Suspense>
   );
 }
-

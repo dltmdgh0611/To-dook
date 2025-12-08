@@ -327,10 +327,10 @@ export default function SettingsModal({ isOpen, onClose, initialTab = 'integrati
                 <span className="font-semibold text-gray-900">{userName}</span>
                 <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${
                   subscription?.isActive && subscription?.status === 'active'
-                    ? 'bg-[#e3f2fd] text-[#1976d2]'
+                    ? 'bg-[var(--color-primary)] text-white'
                     : subscription?.status === 'trial' && subscription?.isActive
-                    ? 'bg-purple-100 text-purple-600'
-                    : 'bg-[#e8f5e9] text-[#4caf50]'
+                    ? 'bg-[#f5f0e8] text-[var(--color-primary)]'
+                    : 'bg-gray-100 text-gray-500'
                 }`}>
                   {subscription?.isActive && subscription?.status === 'active'
                     ? 'Premium'
@@ -405,10 +405,10 @@ export default function SettingsModal({ isOpen, onClose, initialTab = 'integrati
               <span className="font-semibold text-gray-900 text-sm">{userName}</span>
               <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${
                 subscription?.isActive && subscription?.status === 'active'
-                  ? 'bg-[#e3f2fd] text-[#1976d2]'
+                  ? 'bg-[var(--color-primary)] text-white'
                   : subscription?.status === 'trial' && subscription?.isActive
-                  ? 'bg-purple-100 text-purple-600'
-                  : 'bg-[#e8f5e9] text-[#4caf50]'
+                  ? 'bg-[#f5f0e8] text-[var(--color-primary)]'
+                  : 'bg-gray-100 text-gray-500'
               }`}>
                 {subscription?.isActive && subscription?.status === 'active'
                   ? 'Premium'
@@ -826,20 +826,20 @@ export default function SettingsModal({ isOpen, onClose, initialTab = 'integrati
                         </h3>
                         <span className={`text-xs px-3 py-1 rounded-full font-medium ${
                           subscription.status === 'active' 
-                            ? 'bg-[#e8f5e9] text-[#4caf50]'
+                            ? 'bg-[var(--color-primary)] text-white'
                             : subscription.status === 'trial'
-                            ? 'bg-blue-100 text-blue-600'
+                            ? 'bg-[#f5f0e8] text-[var(--color-primary)]'
                             : subscription.status === 'cancelled'
-                            ? 'bg-yellow-100 text-yellow-600'
+                            ? 'bg-gray-200 text-gray-600'
                             : subscription.status === 'expired'
-                            ? 'bg-red-100 text-red-600'
-                            : 'bg-gray-100 text-gray-600'
+                            ? 'bg-gray-200 text-gray-600'
+                            : 'bg-gray-100 text-gray-500'
                         }`}>
-                          {subscription.status === 'active' && (language === 'ko' ? '프리미엄 활성' : 'Premium Active')}
-                          {subscription.status === 'trial' && (language === 'ko' ? '7일 무료 체험 중' : '7-Day Trial')}
+                          {subscription.status === 'active' && (language === 'ko' ? '프리미엄' : 'Premium')}
+                          {subscription.status === 'trial' && (language === 'ko' ? '체험 중' : 'Trial')}
                           {subscription.status === 'cancelled' && (language === 'ko' ? '취소됨' : 'Cancelled')}
                           {subscription.status === 'expired' && (language === 'ko' ? '만료됨' : 'Expired')}
-                          {subscription.status === 'none' && (language === 'ko' ? '결제 전' : 'Not Subscribed')}
+                          {subscription.status === 'none' && (language === 'ko' ? '무료' : 'Free')}
                         </span>
                       </div>
                       
@@ -905,20 +905,22 @@ export default function SettingsModal({ isOpen, onClose, initialTab = 'integrati
                     
                     {/* 구독 일정 안내 (체험 중일 때만) */}
                     {subscription.status === 'trial' && subscription.isActive && (
-                      <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
-                        <h3 className="font-medium text-blue-800 mb-2 text-sm flex items-center gap-2">
-                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
-                          </svg>
+                      <div className="bg-[var(--color-primary)] rounded-xl p-4">
+                        <h3 className="font-medium text-white mb-3 text-sm flex items-center gap-2">
+                          <div className="w-6 h-6 rounded-lg bg-white/20 flex items-center justify-center flex-shrink-0">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-3.5 h-3.5 text-white">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
+                            </svg>
+                          </div>
                           {language === 'ko' ? '구독 일정' : 'Subscription Schedule'}
                         </h3>
-                        <ul className="text-sm text-blue-700 space-y-2">
+                        <ul className="text-sm text-white/90 space-y-2">
                           <li className="flex items-start gap-2">
-                            <span className="w-5 h-5 rounded-full bg-green-500 text-white text-xs flex items-center justify-center flex-shrink-0 mt-0.5">✓</span>
+                            <span className="w-5 h-5 rounded-full bg-white/20 text-white text-xs flex items-center justify-center flex-shrink-0 mt-0.5">✓</span>
                             <span>{language === 'ko' ? '현재: 7일 무료 체험 이용 중' : 'Now: Using 7-day free trial'}</span>
                           </li>
                           <li className="flex items-start gap-2">
-                            <span className="w-5 h-5 rounded-full bg-blue-500 text-white text-xs flex items-center justify-center flex-shrink-0 mt-0.5">2</span>
+                            <span className="w-5 h-5 rounded-full bg-white/20 text-white text-xs flex items-center justify-center flex-shrink-0 mt-0.5">2</span>
                             <span>
                               {subscription.subscriptionExpiresAt 
                                 ? (language === 'ko' 
@@ -929,11 +931,11 @@ export default function SettingsModal({ isOpen, onClose, initialTab = 'integrati
                             </span>
                           </li>
                           <li className="flex items-start gap-2">
-                            <span className="w-5 h-5 rounded-full bg-gray-400 text-white text-xs flex items-center justify-center flex-shrink-0 mt-0.5">3</span>
+                            <span className="w-5 h-5 rounded-full bg-white/20 text-white text-xs flex items-center justify-center flex-shrink-0 mt-0.5">3</span>
                             <span>{language === 'ko' ? '이후: 매월 자동 갱신 ($4.99/월)' : 'After: Monthly auto-renewal ($4.99/mo)'}</span>
                           </li>
                         </ul>
-                        <p className="text-xs text-blue-600 mt-3">
+                        <p className="text-xs text-white/60 mt-3">
                           {language === 'ko' 
                             ? '💡 체험 기간 내 취소하면 결제되지 않습니다.'
                             : '💡 Cancel during trial to avoid charges.'}
@@ -943,28 +945,30 @@ export default function SettingsModal({ isOpen, onClose, initialTab = 'integrati
 
                     {/* 프리미엄 기능 */}
                     {subscription.isActive && (
-                      <div className="border border-green-200 rounded-xl p-4 md:p-5 bg-green-50">
-                        <h3 className="font-medium text-green-800 mb-3 text-sm md:text-base flex items-center gap-2">
-                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 01-1.043 3.296 3.745 3.745 0 01-3.296 1.043A3.745 3.745 0 0112 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 01-3.296-1.043 3.745 3.745 0 01-1.043-3.296A3.745 3.745 0 013 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 011.043-3.296 3.746 3.746 0 013.296-1.043A3.746 3.746 0 0112 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 013.296 1.043 3.746 3.746 0 011.043 3.296A3.745 3.745 0 0121 12z" />
-                          </svg>
+                      <div className="bg-[#faf8f3] border border-gray-200 rounded-xl p-4">
+                        <h3 className="font-medium text-gray-900 mb-3 text-sm flex items-center gap-2">
+                          <div className="w-6 h-6 rounded-lg bg-[var(--color-primary)] flex items-center justify-center flex-shrink-0">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-3.5 h-3.5 text-white">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                            </svg>
+                          </div>
                           {language === 'ko' ? '프리미엄 기능 활성화됨' : 'Premium Features Enabled'}
                         </h3>
-                        <ul className="space-y-2 text-sm text-green-700">
+                        <ul className="space-y-2 text-sm text-gray-600">
                           <li className="flex items-center gap-2">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4 text-[var(--color-primary)]">
                               <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
                             </svg>
                             {language === 'ko' ? '무제한 투두 생성' : 'Unlimited Todos'}
                           </li>
                           <li className="flex items-center gap-2">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4 text-[var(--color-primary)]">
                               <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
                             </svg>
                             {language === 'ko' ? 'AI 투두 자동 생성' : 'AI Todo Generation'}
                           </li>
                           <li className="flex items-center gap-2">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4 text-[var(--color-primary)]">
                               <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
                             </svg>
                             {language === 'ko' ? '이메일/슬랙/노션 연동' : 'Email/Slack/Notion Integration'}
@@ -973,25 +977,37 @@ export default function SettingsModal({ isOpen, onClose, initialTab = 'integrati
                       </div>
                     )}
 
-                    {/* 구독 안내 (비활성 상태) */}
-                    {!subscription.isActive && (
-                      <div className="border border-gray-200 rounded-xl p-4 md:p-5">
-                        <h3 className="font-medium text-gray-900 mb-3 text-sm md:text-base">
-                          {language === 'ko' ? '프리미엄으로 업그레이드' : 'Upgrade to Premium'}
-                        </h3>
-                        <p className="text-sm text-gray-600 mb-4">
+                    {/* 구독 안내 (비활성 상태: none 또는 expired) */}
+                    {!subscription.isActive && (subscription.status === 'none' || subscription.status === 'expired') && (
+                      <div className="bg-[var(--color-primary)] rounded-xl p-4 md:p-5">
+                        <div className="flex items-start gap-3 mb-4">
+                          <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center flex-shrink-0">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4 text-white">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
+                            </svg>
+                          </div>
+                          <div>
+                            <h3 className="font-semibold text-white text-sm">
+                              {language === 'ko' ? '프리미엄 7일 무료체험' : '7-Day Free Trial'}
+                            </h3>
+                            <p className="text-xs text-white/60 mt-0.5">
+                              {language === 'ko' ? '모든 기능을 무료로 체험하세요' : 'Try all features for free'}
+                            </p>
+                          </div>
+                        </div>
+                        <p className="text-sm text-white/80 mb-4">
                           {language === 'ko' 
-                            ? '월 $4.99로 모든 프리미엄 기능을 이용하세요. 7일 무료 체험도 가능합니다.'
-                            : 'Get all premium features for $4.99/month. Start with a 7-day free trial.'}
+                            ? '7일간 무료로 체험 후 월 $4.99가 결제됩니다.'
+                            : 'Free for 7 days, then $4.99/month.'}
                         </p>
                         <button
                           onClick={() => {
                             const productId = '059ba064-2ab9-4219-a66a-1615e9c4af1c';
                             window.location.href = `/api/checkout/session?products=${encodeURIComponent(productId)}`;
                           }}
-                          className="w-full py-3 bg-[var(--color-primary)] text-white rounded-lg text-sm font-medium hover:bg-[var(--color-primary-hover)] transition-colors"
+                          className="w-full py-2.5 bg-white text-[var(--color-primary)] rounded-lg text-sm font-semibold hover:bg-gray-100 transition-colors"
                         >
-                          {language === 'ko' ? '지금 구독하기' : 'Subscribe Now'}
+                          {language === 'ko' ? '7일 무료체험 시작하기' : 'Start Free Trial'}
                         </button>
                       </div>
                     )}
