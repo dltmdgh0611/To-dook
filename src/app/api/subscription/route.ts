@@ -36,11 +36,6 @@ export async function GET() {
       isActive = false;
       daysRemaining = 0;
     }
-    // none 상태는 결제 전 상태로 비활성화
-    else if (status === 'none') {
-      isActive = false;
-      daysRemaining = 0;
-    }
     // cancelled 상태는 만료일까지 사용 가능
     else if (status === 'cancelled') {
       if (user.subscriptionExpiresAt) {

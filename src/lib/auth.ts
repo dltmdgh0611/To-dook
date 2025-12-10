@@ -19,6 +19,22 @@ export const authOptions: NextAuthOptions = {
       return session;
     },
   },
+  events: {
+    // 새 사용자 생성 시 7일 trial 만료일 자동 설정
+    async createUser({ user }) {
+      const trialExpiresAt = new Date();
+      trialExpiresAt.setDate(trialExpiresAt.getDate() + 7);
+      
+      await prisma.user.update({
+        where: { id: user.id },
+        data: {
+          subscriptionExpiresAt: trialExpiresAt,
+        },
+      });
+      
+      console.log(`New user ${user.email} created with 7-day trial (expires: ${trialExpiresAt.toISOString()})`);
+    },
+  },
   pages: {
     signIn: '/login',
   },

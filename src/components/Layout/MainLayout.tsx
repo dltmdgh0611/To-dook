@@ -51,8 +51,8 @@ export default function MainLayout() {
     const [displayName, setDisplayName] = useState('');
     const [nameInput, setNameInput] = useState('');
     
-    // 구독 상태
-    const [subscriptionStatus, setSubscriptionStatus] = useState<'none' | 'trial' | 'active' | 'cancelled' | 'expired'>('none');
+    // 구독 상태 (가입 시 기본값: trial)
+    const [subscriptionStatus, setSubscriptionStatus] = useState<'trial' | 'active' | 'cancelled' | 'expired'>('trial');
     const [isSubscriptionActive, setIsSubscriptionActive] = useState(true);
     const [subscriptionDaysRemaining, setSubscriptionDaysRemaining] = useState(7);
     const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
@@ -167,9 +167,9 @@ export default function MainLayout() {
         checkSubscription();
     }, [status]);
 
-    // 프리미엄 필요 액션 핸들러 - none 또는 expired일 때 모달 표시
+    // 프리미엄 필요 액션 핸들러 - expired일 때 모달 표시 (trial은 7일간 사용 가능)
     const handlePremiumAction = (action: () => void) => {
-        if (subscriptionStatus === 'none' || subscriptionStatus === 'expired') {
+        if (subscriptionStatus === 'expired') {
             setShowSubscriptionModal(true);
         } else {
             action();

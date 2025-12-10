@@ -12,26 +12,26 @@ export async function POST() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
     
-    // 7일 무료 체험 (트라이얼)으로 시작
+    // 결제 완료 후 구독 활성화 (30일 구독)
     const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + 7); // 7일 트라이얼
+    expiresAt.setDate(expiresAt.getDate() + 30); // 30일 구독
     
     const user = await prisma.user.update({
       where: { email: session.user.email },
       data: {
-        subscriptionStatus: 'trial', // 트라이얼로 시작
+        subscriptionStatus: 'active', // 결제 후 active 상태
         subscriptionStartedAt: new Date(),
         subscriptionExpiresAt: expiresAt,
       },
     });
     
-    console.log(`User ${user.email} trial activated via success page`);
+    console.log(`User ${user.email} subscription activated via payment`);
     
     return NextResponse.json({
       success: true,
       status: user.subscriptionStatus,
       expiresAt: user.subscriptionExpiresAt,
-      message: '7일 무료 체험이 시작되었습니다.',
+      message: '구독이 활성화되었습니다.',
     });
   } catch (error) {
     console.error('Subscription activation error:', error);
