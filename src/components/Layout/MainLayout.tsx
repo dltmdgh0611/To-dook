@@ -6,7 +6,6 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import TodoMain from '@/components/Todo/TodoMain';
 import ChatPanel from '@/components/Chat/ChatPanel';
 import SettingsModal from '@/components/Settings/SettingsModal';
-import SubscriptionModal from '@/components/Payment/SubscriptionModal';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { getTranslation } from '@/lib/i18n';
 import { POLAR_PRODUCT_ID } from '@/lib/polar-config';
@@ -50,12 +49,6 @@ export default function MainLayout() {
     const [onboardingChecked, setOnboardingChecked] = useState(false);
     const [displayName, setDisplayName] = useState('');
     const [nameInput, setNameInput] = useState('');
-    
-    // 구독 상태 (가입 시 기본값: trial)
-    const [subscriptionStatus, setSubscriptionStatus] = useState<'trial' | 'active' | 'cancelled' | 'expired'>('trial');
-    const [isSubscriptionActive, setIsSubscriptionActive] = useState(true);
-    const [subscriptionDaysRemaining, setSubscriptionDaysRemaining] = useState(7);
-    const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
     
     // 7일 무료체험 남은 일수 계산 (12월 9일까지)
     const calculateDaysRemaining = () => {
@@ -145,36 +138,6 @@ export default function MainLayout() {
         };
         checkOnboarding();
     }, [status, onboardingChecked]);
-
-    // 구독 상태 확인
-    useEffect(() => {
-        const checkSubscription = async () => {
-            if (status === 'authenticated') {
-                try {
-                    const response = await fetch('/api/subscription');
-                    if (response.ok) {
-                        const data = await response.json();
-                        setSubscriptionStatus(data.status);
-                        setIsSubscriptionActive(data.isActive);
-                        setSubscriptionDaysRemaining(data.daysRemaining);
-                        // 자동 모달은 뜨지 않음 - 버튼 클릭 시에만 표시
-                    }
-                } catch (error) {
-                    console.error('Failed to check subscription:', error);
-                }
-            }
-        };
-        checkSubscription();
-    }, [status]);
-
-    // 프리미엄 필요 액션 핸들러 - expired일 때 모달 표시 (trial은 7일간 사용 가능)
-    const handlePremiumAction = (action: () => void) => {
-        if (subscriptionStatus === 'expired') {
-            setShowSubscriptionModal(true);
-        } else {
-            action();
-        }
-    };
 
     const handleNameSubmit = async () => {
         if (!nameInput.trim()) return;
@@ -362,7 +325,7 @@ export default function MainLayout() {
                     
                     {/* 액션 버튼들 */}
                     <button 
-                        onClick={() => onboardingStep === 0 && handlePremiumAction(() => setAddTodoTrigger(prev => prev + 1))}
+                        onClick={() => onboardingStep === 0 && setAddTodoTrigger(prev => prev + 1)}
                         className={`w-10 h-10 md:w-9 md:h-9 rounded-full bg-[var(--color-primary)] flex items-center justify-center text-white shadow-md transition-all ${onboardingStep === 0 ? 'hover:bg-[var(--color-primary-hover)] hover:shadow-lg' : 'opacity-50 cursor-not-allowed'}`}
                         title={getTranslation(language, 'newTodo')}
                         disabled={onboardingStep > 0}
@@ -373,7 +336,7 @@ export default function MainLayout() {
                     </button>
                     <div className="relative">
                         <button 
-                            onClick={() => onboardingStep === 0 && handlePremiumAction(() => setGenerateTrigger(prev => prev + 1))}
+                            onClick={() => onboardingStep === 0 && setGenerateTrigger(prev => prev + 1)}
                             className={`w-10 h-10 md:w-9 md:h-9 rounded-full border-2 border-[var(--color-primary)] flex items-center justify-center transition-all ${onboardingStep === 3 ? 'bg-white ring-4 ring-white/50 shadow-lg' : onboardingStep === 0 ? 'hover:bg-[var(--color-primary)]/10' : 'opacity-50 cursor-not-allowed'}`}
                             title={getTranslation(language, 'generateWithAI')}
                             disabled={onboardingStep > 0 && onboardingStep !== 3}
@@ -525,15 +488,14 @@ export default function MainLayout() {
                                             <button 
                                                 onClick={() => {
                                                     setIsProfileOpen(false);
-                                                    if (isSubscriptionActive && subscriptionStatus === 'active') {
-                                                        // 프리미엄 사용자: 설정의 프리미엄 탭으로 이동
-                                                        setSettingsInitialTab('general');
-                                                        setIsSettingsOpen(true);
+                                                    // Polar Checkout으로 바로 리다이렉트 (Polar가 자동으로 결제 UI 제공)
+                                                    // products 파라미터는 필수이므로 설정 파일에서 가져옴
+                                                    if (POLAR_PRODUCT_ID) {
+                                                        window.location.href = `/api/checkout?products=${encodeURIComponent(POLAR_PRODUCT_ID)}`;
                                                     } else {
-                                                        // 비구독자: 결제 페이지로 이동
-                                                        if (POLAR_PRODUCT_ID) {
-                                                            window.location.href = `/api/checkout/session?products=${encodeURIComponent(POLAR_PRODUCT_ID)}`;
-                                                        }
+                                                        alert(language === 'ko' 
+                                                            ? '제품 ID가 설정되지 않았습니다. 환경 변수 NEXT_PUBLIC_POLAR_PRODUCT_ID를 확인해주세요.' 
+                                                            : 'Product ID is not set. Please check NEXT_PUBLIC_POLAR_PRODUCT_ID environment variable.');
                                                     }
                                                 }}
                                                 className="w-full px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-3"
@@ -541,12 +503,7 @@ export default function MainLayout() {
                                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
                                                     <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 01-1.043 3.296 3.745 3.745 0 01-3.296 1.043A3.745 3.745 0 0112 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 01-3.296-1.043 3.745 3.745 0 01-1.043-3.296A3.745 3.745 0 013 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 011.043-3.296 3.746 3.746 0 013.296-1.043A3.746 3.746 0 0112 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 013.296 1.043 3.746 3.746 0 011.043 3.296A3.745 3.745 0 0121 12z" />
                                                 </svg>
-                                                <span>
-                                                    {isSubscriptionActive && subscriptionStatus === 'active'
-                                                        ? (language === 'ko' ? '프리미엄 ✓' : 'Premium ✓')
-                                                        : getTranslation(language, 'upgradePlan')
-                                                    }
-                                                </span>
+                                                <span>{getTranslation(language, 'upgradePlan')}</span>
                                             </button>
                                             <button 
                                                 onClick={() => {
@@ -658,15 +615,14 @@ export default function MainLayout() {
                                 <button 
                                     onClick={() => {
                                         setIsProfileOpen(false);
-                                        if (isSubscriptionActive && subscriptionStatus === 'active') {
-                                            // 프리미엄 사용자: 설정의 프리미엄 탭으로 이동
-                                            setSettingsInitialTab('general');
-                                            setIsSettingsOpen(true);
+                                        // Polar Checkout으로 바로 리다이렉트 (Polar가 자동으로 결제 UI 제공)
+                                        // products 파라미터는 필수이므로 설정 파일에서 가져옴
+                                        if (POLAR_PRODUCT_ID) {
+                                            window.location.href = `/api/checkout?products=${encodeURIComponent(POLAR_PRODUCT_ID)}`;
                                         } else {
-                                            // 비구독자: 결제 페이지로 이동
-                                            if (POLAR_PRODUCT_ID) {
-                                                window.location.href = `/api/checkout/session?products=${encodeURIComponent(POLAR_PRODUCT_ID)}`;
-                                            }
+                                            alert(language === 'ko' 
+                                                ? '제품 ID가 설정되지 않았습니다. 환경 변수 NEXT_PUBLIC_POLAR_PRODUCT_ID를 확인해주세요.' 
+                                                : 'Product ID is not set. Please check NEXT_PUBLIC_POLAR_PRODUCT_ID environment variable.');
                                         }
                                     }}
                                     className="w-full px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-3"
@@ -674,12 +630,7 @@ export default function MainLayout() {
                                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
                                         <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 01-1.043 3.296 3.745 3.745 0 01-3.296 1.043A3.745 3.745 0 0112 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 01-3.296-1.043 3.745 3.745 0 01-1.043-3.296A3.745 3.745 0 013 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 011.043-3.296 3.746 3.746 0 013.296-1.043A3.746 3.746 0 0112 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 013.296 1.043 3.746 3.746 0 011.043 3.296A3.745 3.745 0 0121 12z" />
                                     </svg>
-                                    <span>
-                                        {isSubscriptionActive && subscriptionStatus === 'active'
-                                            ? (language === 'ko' ? '프리미엄 ✓' : 'Premium ✓')
-                                            : getTranslation(language, 'upgradePlan')
-                                        }
-                                    </span>
+                                    <span>{getTranslation(language, 'upgradePlan')}</span>
                                 </button>
                                 <button 
                                     onClick={() => {
@@ -763,7 +714,7 @@ export default function MainLayout() {
             </div>
 
             {/* 7일 무료체험 배너 - 데스크톱: 왼쪽 아래 사이드바 옆 / 모바일: 숨김 */}
-            {!isMobile && onboardingStep === 0 && subscriptionStatus === 'trial' && isSubscriptionActive && subscriptionDaysRemaining > 0 && (
+            {!isMobile && onboardingStep === 0 && daysRemaining > 0 && (
                 <div className="fixed bottom-4 left-[72px] z-40 animate-fadeIn">
                     <div className="bg-[var(--color-primary)] text-white px-4 py-2.5 rounded-full shadow-lg flex items-center gap-3">
                         <div className="flex items-center gap-2">
@@ -771,16 +722,10 @@ export default function MainLayout() {
                             <span className="text-sm font-medium">{getTranslation(language, 'freeTrial')}</span>
                         </div>
                         <div className="w-px h-4 bg-white/30" />
-                        <span className="text-xs text-white/80">{getTranslation(language, 'daysRemaining', { days: subscriptionDaysRemaining.toString() })}</span>
+                        <span className="text-xs text-white/80">{getTranslation(language, 'daysRemaining', { days: daysRemaining.toString() })}</span>
                     </div>
                 </div>
             )}
-
-            {/* 프리미엄 필요 모달 - 버튼 클릭 시 표시 */}
-            <SubscriptionModal 
-                isOpen={showSubscriptionModal}
-                onClose={() => setShowSubscriptionModal(false)}
-            />
 
             {/* Settings Modal */}
             <SettingsModal

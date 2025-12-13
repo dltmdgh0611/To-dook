@@ -693,6 +693,27 @@ export default function SettingsModal({ isOpen, onClose, initialTab = 'integrati
                       </div>
                     </div>
                   </div>
+
+                  {/* 보안 안내 */}
+                  <div className="bg-gray-50 border border-gray-200 rounded-xl p-3 md:p-4 mt-4">
+                    <div className="flex items-start gap-3">
+                      <div className="flex-shrink-0 mt-0.5">
+                        <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+                        </svg>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-medium text-gray-900 mb-1.5 text-sm md:text-base">
+                          {language === 'ko' ? '데이터 보안' : 'Data Security'}
+                        </h3>
+                        <p className="text-xs text-gray-600 leading-relaxed">
+                          {language === 'ko'
+                            ? '고객의 개인정보를 최우선으로 보호합니다. 모든 데이터 전송은 완전히 암호화되며, 원본 데이터는 저장되지 않습니다. AI 모델 학습에 데이터가 사용되지 않습니다.'
+                            : 'We treat your personal information with the utmost care. All data transmissions are fully encrypted, and your original data is never stored. Your data is not used for AI model training.'}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             )}
