@@ -9,6 +9,7 @@ import SettingsModal from '@/components/Settings/SettingsModal';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { getTranslation } from '@/lib/i18n';
 import { POLAR_PRODUCT_ID } from '@/lib/polar-config';
+import { track } from '@/amplitude';
 
 export default function MainLayout() {
     const { data: session, status } = useSession();
@@ -336,7 +337,12 @@ export default function MainLayout() {
                     </button>
                     <div className="relative">
                         <button 
-                            onClick={() => onboardingStep === 0 && setGenerateTrigger(prev => prev + 1)}
+                            onClick={() => {
+                                if (onboardingStep === 0) {
+                                    track('Refresh Button Clicked');
+                                    setGenerateTrigger(prev => prev + 1);
+                                }
+                            }}
                             className={`w-10 h-10 md:w-9 md:h-9 rounded-full border-2 border-[var(--color-primary)] flex items-center justify-center transition-all ${onboardingStep === 3 ? 'bg-white ring-4 ring-white/50 shadow-lg' : onboardingStep === 0 ? 'hover:bg-[var(--color-primary)]/10' : 'opacity-50 cursor-not-allowed'}`}
                             title={getTranslation(language, 'generateWithAI')}
                             disabled={onboardingStep > 0 && onboardingStep !== 3}

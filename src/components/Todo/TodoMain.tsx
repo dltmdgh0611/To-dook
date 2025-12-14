@@ -7,6 +7,7 @@ import TodoSkeleton from '@/components/Todo/TodoSkeleton';
 import DatePicker from '@/components/Todo/DatePicker';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { getTranslation } from '@/lib/i18n';
+import { track } from '@/amplitude';
 import {
     DndContext,
     closestCenter,
@@ -471,6 +472,9 @@ export default function TodoMain({
 
     // 투두 추가 - 빈 투두 생성 후 편집 모드
     const addNewTodo = async () => {
+        // Amplitude 이벤트 트래킹
+        track('Add Todo Button Clicked');
+        
         try {
             const res = await fetch('/api/todos', {
                 method: 'POST',
