@@ -1,12 +1,22 @@
-declare module '@amplitude/analytics-browser' {
-  export function init(apiKey: string, options?: any): void;
-  export function track(eventName: string, eventProperties?: Record<string, any>): void;
-  export function add(plugin: any): void;
-  export function setUserId(userId: string): void;
-  export function identify(identify: any): void;
-  export function reset(): void;
+// Amplitude CDN 전역 객체 타입 선언
+interface AmplitudeGlobal {
+  init(apiKey: string, options?: any): void;
+  track(eventName: string, eventProperties?: Record<string, any>): void;
+  add(plugin: any): void;
+  setUserId(userId: string): void;
+  identify(identify: any): void;
+  reset(): void;
+  getDeviceId(): string;
+  getSessionId(): number;
 }
 
-declare module '@amplitude/plugin-session-replay-browser' {
-  export function sessionReplayPlugin(options?: any): any;
+interface SessionReplayGlobal {
+  plugin(options?: { sampleRate?: number }): any;
+}
+
+declare global {
+  interface Window {
+    amplitude?: AmplitudeGlobal;
+    sessionReplay?: SessionReplayGlobal;
+  }
 }
