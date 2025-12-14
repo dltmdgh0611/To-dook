@@ -1,14 +1,16 @@
 'use client';
 
+import * as amplitude from '@amplitude/analytics-browser';
+
 // 커스텀 이벤트 트래킹용 함수
-export async function track(eventName: string, eventProperties?: Record<string, any>) {
+export function track(eventName: string, eventProperties?: Record<string, any>) {
   if (typeof window === 'undefined') return;
   
   try {
-    const amplitudeModule = await import('@amplitude/analytics-browser');
-    const amplitude = amplitudeModule.default || amplitudeModule;
     amplitude.track(eventName, eventProperties);
   } catch (error) {
     console.error('Failed to track event:', error);
   }
 }
+
+export default amplitude;
