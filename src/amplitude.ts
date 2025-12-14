@@ -5,7 +5,8 @@ export async function track(eventName: string, eventProperties?: Record<string, 
   if (typeof window === 'undefined') return;
   
   try {
-    const amplitude = await import('@amplitude/analytics-browser');
+    const amplitudeModule = await import('@amplitude/analytics-browser');
+    const amplitude = amplitudeModule.default || amplitudeModule;
     amplitude.track(eventName, eventProperties);
   } catch (error) {
     console.error('Failed to track event:', error);
