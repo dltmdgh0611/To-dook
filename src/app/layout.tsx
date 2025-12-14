@@ -3,7 +3,7 @@ import "./globals.css";
 import { Providers } from "./providers";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
-import { Amplitude } from "@/amplitude";
+import AmplitudeWrapper from "@/components/AmplitudeWrapper";
 
 export const metadata: Metadata = {
   title: "To-Dook",
@@ -30,7 +30,7 @@ export default function RootLayout({
         />
       </head>
       <body suppressHydrationWarning>
-        <Amplitude />
+        <AmplitudeWrapper />
         <Providers>{children}</Providers>
         <Analytics />
         <SpeedInsights />
