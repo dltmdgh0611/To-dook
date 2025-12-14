@@ -1,16 +1,13 @@
 'use client';
 
-import * as amplitude from '@amplitude/analytics-browser';
-import { sessionReplayPlugin } from '@amplitude/plugin-session-replay-browser';
-
-function initAmplitude() {
-  if (typeof window !== 'undefined') {
-    amplitude.add(sessionReplayPlugin());
-    amplitude.init('c31690a7e5ae8f316bec9f63bb65588a', {"autocapture":true});
+// 커스텀 이벤트 트래킹용 함수
+export async function track(eventName: string, eventProperties?: Record<string, any>) {
+  if (typeof window === 'undefined') return;
+  
+  try {
+    const amplitude = await import('@amplitude/analytics-browser');
+    amplitude.track(eventName, eventProperties);
+  } catch (error) {
+    console.error('Failed to track event:', error);
   }
 }
-
-initAmplitude();
-
-export const Amplitude = () => null;
-export default amplitude;

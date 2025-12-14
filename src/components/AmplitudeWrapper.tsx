@@ -1,11 +1,23 @@
 'use client';
 
-import dynamic from 'next/dynamic';
-
-const Amplitude = dynamic(() => import('@/amplitude').then(mod => ({ default: mod.Amplitude })), {
-  ssr: false,
-});
+import { useEffect } from 'react';
 
 export default function AmplitudeWrapper() {
-  return <Amplitude />;
+  useEffect(() => {
+    const initAmplitude = async () => {
+      try {
+        const amplitude = await import('@amplitude/analytics-browser');
+        const { sessionReplayPlugin } = await import('@amplitude/plugin-session-replay-browser');
+        
+        amplitude.add(sessionReplayPlugin());
+        amplitude.init('c31690a7e5ae8f316bec9f63bb65588a', { autocapture: true });
+      } catch (error) {
+        console.error('Failed to initialize Amplitude:', error);
+      }
+    };
+    
+    initAmplitude();
+  }, []);
+
+  return null;
 }
