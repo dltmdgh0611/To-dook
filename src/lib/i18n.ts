@@ -134,6 +134,19 @@ export const translations = {
     mobileWarningTitle: '데스크탑 사용을 권장합니다',
     mobileWarningMessage: '더 나은 경험을 위해 데스크탑 접속을 권장드립니다. 모바일에서는 일부 기능이 제한될 수 있습니다.',
     mobileWarningContinue: '계속하기',
+    
+    // 공유
+    share: '공유',
+    shareDesc: '할 일 목록을 친구들과 공유하세요.',
+    shareWithNaver: '네이버 블로그에 공유',
+    shareWithNaverDesc: '할 일 목록을 네이버 블로그에 공유합니다.',
+    shareWithInstagram: '인스타그램에 공유',
+    shareWithInstagramDesc: '할 일 목록을 인스타그램 스토리용으로 복사합니다.',
+    shareWithKakao: '카카오톡으로 공유',
+    shareWithKakaoDesc: '할 일 목록을 카카오톡으로 공유합니다.',
+    copySuccess: '클립보드에 복사되었습니다!',
+    shareReady: '공유 준비가 완료되었습니다!',
+    noTodosToShare: '공유할 할 일이 없습니다.',
   },
   en: {
     // Common
@@ -266,6 +279,19 @@ export const translations = {
     mobileWarningTitle: 'Desktop Recommended',
     mobileWarningMessage: 'For a better experience, please access from a desktop. Some features may be limited on mobile.',
     mobileWarningContinue: 'Continue',
+    
+    // Share
+    share: 'Share',
+    shareDesc: 'Share your todo list with friends.',
+    shareWithNaver: 'Share to Naver Blog',
+    shareWithNaverDesc: 'Share your todo list to Naver Blog.',
+    shareWithInstagram: 'Share to Instagram',
+    shareWithInstagramDesc: 'Copy your todo list for Instagram Stories.',
+    shareWithKakao: 'Share to KakaoTalk',
+    shareWithKakaoDesc: 'Share your todo list via KakaoTalk.',
+    copySuccess: 'Copied to clipboard!',
+    shareReady: 'Ready to share!',
+    noTodosToShare: 'No todos to share.',
   }
 };
 

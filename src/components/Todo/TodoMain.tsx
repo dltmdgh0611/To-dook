@@ -470,11 +470,34 @@ export default function TodoMain({
         }, 0);
     };
 
-    // 투두 추가 - 빈 투두 생성 후 편집 모드
+    // 투두 추가 - Optimistic UI (느슨한 결합: 프론트 먼저 업데이트 후 백엔드 동기화)
     const addNewTodo = async () => {
         // Amplitude 이벤트 트래킹
         track('Add Todo Button Clicked');
         
+        // 임시 ID 생성 (UUID 형식)
+        const tempId = `temp-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+        
+        // 임시 투두 객체 생성
+        const tempTodo: TodoItem = {
+            id: tempId,
+            title: '',
+            completed: false,
+            order: -1, // 맨 위에 표시
+        };
+        
+        // 1. UI 먼저 업데이트 (낙관적 업데이트)
+        setTodos(prev => [tempTodo, ...prev]);
+        
+        // 바로 편집 모드로
+        setEditingTodoId(tempId);
+        setEditingTitle('');
+        setEditingDueDate('');
+        setTimeout(() => {
+            titleInputRef.current?.focus();
+        }, 0);
+        
+        // 2. 백그라운드에서 백엔드와 동기화
         try {
             const res = await fetch('/api/todos', {
                 method: 'POST',
@@ -487,21 +510,26 @@ export default function TodoMain({
 
             if (res.ok) {
                 const { todo } = await res.json();
-                setTodos(prev => [todo, ...prev]);
-                // 바로 편집 모드로
-                setEditingTodoId(todo.id);
-                setEditingTitle('');
-                setEditingDueDate('');
-                setTimeout(() => {
-                    titleInputRef.current?.focus();
-                }, 0);
+                // 3. 임시 ID를 실제 ID로 교체
+                setTodos(prev => prev.map(t => 
+                    t.id === tempId ? { ...todo, order: t.order } : t
+                ));
+                // 편집 중인 ID도 업데이트
+                setEditingTodoId(prevId => prevId === tempId ? todo.id : prevId);
+            } else {
+                // 4. 실패 시 롤백
+                setTodos(prev => prev.filter(t => t.id !== tempId));
+                setEditingTodoId(null);
             }
         } catch (error) {
             console.error('Failed to create todo:', error);
+            // 4. 에러 시 롤백
+            setTodos(prev => prev.filter(t => t.id !== tempId));
+            setEditingTodoId(null);
         }
     };
 
-    // 투두 저장 (인라인 편집)
+    // 투두 저장 (인라인 편집) - Optimistic UI
     const saveTodo = async (todoId: string) => {
         if (!editingTitle.trim()) {
             // 제목이 없으면 삭제
@@ -509,24 +537,53 @@ export default function TodoMain({
             return;
         }
 
+        const trimmedTitle = editingTitle.trim();
+        const trimmedDueDate = editingDueDate.trim() || null;
+        
+        // 기존 투두 백업 (롤백용)
+        const originalTodo = todos.find(t => t.id === todoId);
+        
+        // 1. UI 먼저 업데이트 (낙관적 업데이트)
+        setTodos(prev => prev.map(t => 
+            t.id === todoId 
+                ? { ...t, title: trimmedTitle, dueDate: trimmedDueDate || undefined }
+                : t
+        ));
+        setEditingTodoId(null);
+
+        // 임시 ID인 경우 백엔드 동기화 스킵 (addNewTodo에서 처리)
+        if (todoId.startsWith('temp-')) {
+            return;
+        }
+
+        // 2. 백그라운드에서 백엔드와 동기화
         try {
             const res = await fetch('/api/todos', {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     id: todoId,
-                    title: editingTitle.trim(),
-                    dueDate: editingDueDate.trim() || null,
+                    title: trimmedTitle,
+                    dueDate: trimmedDueDate,
                 }),
             });
 
             if (res.ok) {
                 const { todo } = await res.json();
-                setTodos(prev => prev.map(t => t.id === todo.id ? todo : t));
-                setEditingTodoId(null);
+                // 서버 응답으로 업데이트 (서버에서 추가 처리된 데이터 반영)
+                setTodos(prev => prev.map(t => t.id === todo.id ? { ...t, ...todo } : t));
+            } else {
+                // 3. 실패 시 롤백
+                if (originalTodo) {
+                    setTodos(prev => prev.map(t => t.id === todoId ? originalTodo : t));
+                }
             }
         } catch (error) {
             console.error('Failed to save todo:', error);
+            // 3. 에러 시 롤백
+            if (originalTodo) {
+                setTodos(prev => prev.map(t => t.id === todoId ? originalTodo : t));
+            }
         }
     };
 
