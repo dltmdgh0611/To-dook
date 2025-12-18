@@ -640,10 +640,6 @@ export default function LandingPage() {
                         <p className="text-sm text-gray-500">
                             ©2025 TODOOK · All rights reserved.
                         </p>
-                        <div className="text-xs text-gray-400 leading-relaxed">
-                            <p>어센텀 | 대표자: 박영민 | 이메일 : ascentumf4@gmail.com | 대표 전화번호: +82 10-4008-3483</p>
-                            <p>사업자 등록번호 : 478-59-01063 | 주소: 경기 성남시 수정구 복정동 495, 6층 어센텀</p>
-                        </div>
                     </div>
                 </div>
             </footer>
