@@ -45,11 +45,13 @@ export default function MainLayout() {
     const [settingsInitialTab, setSettingsInitialTab] = useState<'general' | 'integrations' | 'permissions' | 'account'>('integrations');
     const [generateTrigger, setGenerateTrigger] = useState(0);
     const [addTodoTrigger, setAddTodoTrigger] = useState(0);
-    // 온보딩 단계: 0 = 완료, 1 = 이름 입력, 2 = 설정 안내, 3 = 새로고침 안내
+    // 온보딩 단계: 0 = 완료, 1 = 이름 입력, 2 = 설정 안내, 3 = 새로고침 안내, 4 = 추천인 코드 입력
     const [onboardingStep, setOnboardingStep] = useState(0);
     const [onboardingChecked, setOnboardingChecked] = useState(false);
     const [displayName, setDisplayName] = useState('');
     const [nameInput, setNameInput] = useState('');
+    const [referralCodeInput, setReferralCodeInput] = useState('');
+    const [referralError, setReferralError] = useState('');
     
     // 7일 무료체험 남은 일수 계산 (12월 9일까지)
     const calculateDaysRemaining = () => {
@@ -163,18 +165,52 @@ export default function MainLayout() {
         if (onboardingStep === 2) {
             setOnboardingStep(3);
         } else if (onboardingStep === 3) {
+            // 추천인 코드 입력 단계로 이동
+            setOnboardingStep(4);
+        } else if (onboardingStep === 4) {
             // 온보딩 완료 처리
-            try {
-                await fetch('/api/onboarding', { 
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({}),
-                });
-            } catch (error) {
-                console.error('Failed to complete onboarding:', error);
-            }
-            setOnboardingStep(0);
+            await completeOnboarding();
         }
+    };
+
+    const handleReferralSubmit = async () => {
+        if (!referralCodeInput.trim()) {
+            // 추천인 코드 없이 완료
+            await completeOnboarding();
+            return;
+        }
+
+        setReferralError('');
+        try {
+            const res = await fetch('/api/referral', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ referralCode: referralCodeInput.trim() }),
+            });
+
+            if (res.ok) {
+                await completeOnboarding();
+            } else {
+                const data = await res.json();
+                setReferralError(data.error || (language === 'ko' ? '유효하지 않은 코드입니다.' : 'Invalid code.'));
+            }
+        } catch (error) {
+            console.error('Failed to apply referral code:', error);
+            setReferralError(language === 'ko' ? '오류가 발생했습니다.' : 'An error occurred.');
+        }
+    };
+
+    const completeOnboarding = async () => {
+        try {
+            await fetch('/api/onboarding', { 
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({}),
+            });
+        } catch (error) {
+            console.error('Failed to complete onboarding:', error);
+        }
+        setOnboardingStep(0);
     };
 
     const handleSkipOnboarding = async () => {
@@ -301,6 +337,64 @@ export default function MainLayout() {
                                 className="px-5 py-2 bg-white text-[var(--color-primary)] text-sm font-semibold rounded-lg hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 {getTranslation(language, 'continue')}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* 온보딩 Step 4: 추천인 코드 입력 모달 */}
+            {onboardingStep === 4 && (
+                <div className="fixed inset-0 flex items-center justify-center z-[70] p-4">
+                    <div className="bg-[var(--color-primary)] rounded-2xl shadow-2xl p-6 md:p-8 w-full max-w-md">
+                        <div className="flex items-start gap-3 mb-6">
+                            <div className="w-9 h-9 rounded-lg bg-white/20 flex items-center justify-center flex-shrink-0">
+                                <span className="text-xl">🎁</span>
+                            </div>
+                            <div>
+                                <p className="font-semibold text-white text-base">{getTranslation(language, 'enterReferralCode')}</p>
+                                <p className="text-xs text-white/70 mt-0.5">{getTranslation(language, 'step4of4')}</p>
+                            </div>
+                        </div>
+                        <p className="text-sm text-white/90 mb-5 leading-relaxed">
+                            {getTranslation(language, 'referralCodeOptional')}
+                        </p>
+                        
+                        <div className="mb-4">
+                            <input
+                                type="text"
+                                value={referralCodeInput}
+                                onChange={(e) => {
+                                    setReferralCodeInput(e.target.value.toUpperCase());
+                                    setReferralError('');
+                                }}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter') {
+                                        handleReferralSubmit();
+                                    }
+                                }}
+                                placeholder={getTranslation(language, 'referralCodePlaceholder')}
+                                className="w-full px-4 py-3 text-base bg-white rounded-lg focus:outline-none focus:ring-2 focus:ring-white/50 transition-all placeholder:text-gray-400 font-mono tracking-wider uppercase"
+                                maxLength={6}
+                                autoFocus
+                            />
+                            {referralError && (
+                                <p className="text-xs text-red-200 mt-2">{referralError}</p>
+                            )}
+                        </div>
+                        
+                        <div className="flex items-center justify-between">
+                            <button
+                                onClick={completeOnboarding}
+                                className="text-xs text-white/70 hover:text-white transition-colors"
+                            >
+                                {getTranslation(language, 'skip')}
+                            </button>
+                            <button
+                                onClick={handleReferralSubmit}
+                                className="px-5 py-2 bg-white text-[var(--color-primary)] text-sm font-semibold rounded-lg hover:bg-gray-100 transition-colors"
+                            >
+                                {getTranslation(language, 'confirm')}
                             </button>
                         </div>
                     </div>

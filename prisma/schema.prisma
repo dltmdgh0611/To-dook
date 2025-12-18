@@ -57,6 +57,11 @@ model User {
   subscriptionExpiresAt DateTime?                   // 구독 만료일 (체험: 7일 후, 구독: 다음 결제일)
   polarCustomerId       String?                     // Polar 고객 ID
   polarSubscriptionId   String?                      // Polar 구독 ID
+  
+  // 추천인 제도 관련 필드
+  referralCode          String?   @unique          // 본인의 추천인 코드 (자동 생성)
+  referredBy            String?                     // 추천인 코드 (누구에게 추천받았는지)
+  referralCount         Int       @default(0)       // 추천한 사람 수
 }
 
 model VerificationToken {

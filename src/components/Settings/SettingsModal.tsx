@@ -6,7 +6,7 @@ import GmailAuthGuideModal from './GmailAuthGuideModal';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { getTranslation } from '@/lib/i18n';
 
-type SettingTab = 'general' | 'integrations' | 'permissions' | 'subscription' | 'share' | 'account';
+type SettingTab = 'general' | 'integrations' | 'permissions' | 'subscription' | 'referral' | 'account';
 
 interface SettingData {
   gmailConnected: boolean;
@@ -73,8 +73,11 @@ export default function SettingsModal({ isOpen, onClose, initialTab = 'integrati
   const [loadingSubscription, setLoadingSubscription] = useState(false);
   const [cancelConfirm, setCancelConfirm] = useState(false);
   
-  // 공유 상태
-  const [shareMessage, setShareMessage] = useState('');
+  // 추천인 상태
+  const [referralCode, setReferralCode] = useState('');
+  const [referralCount, setReferralCount] = useState(0);
+  const [referralMessage, setReferralMessage] = useState('');
+  const [loadingReferral, setLoadingReferral] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
@@ -295,95 +298,41 @@ export default function SettingsModal({ isOpen, onClose, initialTab = 'integrati
     );
   };
 
-  // 할 일 목록 텍스트 생성
-  const getTodoListText = async (): Promise<string> => {
+  // 추천인 코드 가져오기
+  const fetchReferralCode = async () => {
+    setLoadingReferral(true);
     try {
-      const res = await fetch('/api/todos');
+      const res = await fetch('/api/referral');
       if (res.ok) {
         const data = await res.json();
-        const todos = data.todos || [];
-        const activeTodos = todos.filter((t: { completed: boolean }) => !t.completed);
-        
-        if (activeTodos.length === 0) {
-          return '';
-        }
-        
-        const today = new Date().toLocaleDateString(language === 'ko' ? 'ko-KR' : 'en-US', {
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric'
-        });
-        
-        let text = language === 'ko' 
-          ? `📝 오늘의 할 일 (${today})\n\n`
-          : `📝 Today's Todos (${today})\n\n`;
-        
-        activeTodos.forEach((todo: { emoji?: string; title: string; dueDate?: string }, index: number) => {
-          const emoji = todo.emoji || '•';
-          text += `${emoji} ${todo.title}`;
-          if (todo.dueDate) {
-            text += ` (${todo.dueDate})`;
-          }
-          text += '\n';
-        });
-        
-        text += language === 'ko' 
-          ? '\n\n📌 Powered by OwnDesk'
-          : '\n\n📌 Powered by OwnDesk';
-        
-        return text;
+        setReferralCode(data.referralCode || '');
+        setReferralCount(data.referralCount || 0);
       }
     } catch (error) {
-      console.error('Failed to fetch todos for sharing:', error);
+      console.error('Failed to fetch referral code:', error);
+    } finally {
+      setLoadingReferral(false);
     }
-    return '';
   };
 
-  // 네이버 블로그 공유
-  const handleShareNaver = async () => {
-    const text = await getTodoListText();
-    if (!text) {
-      setShareMessage(getTranslation(language, 'noTodosToShare'));
-      setTimeout(() => setShareMessage(''), 3000);
-      return;
+  // 추천인 탭 열 때 코드 가져오기
+  useEffect(() => {
+    if (activeTab === 'referral') {
+      fetchReferralCode();
     }
-    
-    const title = encodeURIComponent(language === 'ko' ? '오늘의 할 일 목록' : 'Today\'s Todo List');
-    const contents = encodeURIComponent(text);
-    const url = `https://blog.naver.com/PostWriteForm.naver?title=${title}&contents=${contents}`;
-    window.open(url, '_blank');
-  };
+  }, [activeTab]);
 
-  // 인스타그램 공유 (클립보드 복사)
-  const handleShareInstagram = async () => {
-    const text = await getTodoListText();
-    if (!text) {
-      setShareMessage(getTranslation(language, 'noTodosToShare'));
-      setTimeout(() => setShareMessage(''), 3000);
-      return;
-    }
+  // 추천인 코드 복사
+  const handleCopyReferralCode = async () => {
+    if (!referralCode) return;
     
     try {
-      await navigator.clipboard.writeText(text);
-      setShareMessage(getTranslation(language, 'copySuccess'));
-      setTimeout(() => setShareMessage(''), 3000);
+      await navigator.clipboard.writeText(referralCode);
+      setReferralMessage(getTranslation(language, 'referralCodeCopied'));
+      setTimeout(() => setReferralMessage(''), 3000);
     } catch (error) {
       console.error('Failed to copy:', error);
     }
-  };
-
-  // 카카오톡 공유
-  const handleShareKakao = async () => {
-    const text = await getTodoListText();
-    if (!text) {
-      setShareMessage(getTranslation(language, 'noTodosToShare'));
-      setTimeout(() => setShareMessage(''), 3000);
-      return;
-    }
-    
-    // 카카오톡 공유 (웹에서는 카카오링크 URL 스킴 사용)
-    const kakaoUrl = `https://story.kakao.com/share?url=${encodeURIComponent(window.location.origin)}&text=${encodeURIComponent(text)}`;
-    window.open(kakaoUrl, '_blank');
   };
 
   if (!isOpen) return null;
@@ -480,14 +429,14 @@ export default function SettingsModal({ isOpen, onClose, initialTab = 'integrati
                 {language === 'ko' ? '프리미엄' : 'Premium'}
               </button>
               <button
-                onClick={() => setActiveTab('share')}
+                onClick={() => setActiveTab('referral')}
                 className={`w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                  activeTab === 'share' 
+                  activeTab === 'referral' 
                     ? 'bg-white text-gray-900 shadow-sm' 
                     : 'text-gray-600 hover:bg-white/50'
                 }`}
               >
-                {getTranslation(language, 'share')}
+                {getTranslation(language, 'referral')}
               </button>
               <button
                 onClick={() => setActiveTab('account')}
@@ -565,14 +514,14 @@ export default function SettingsModal({ isOpen, onClose, initialTab = 'integrati
                 {language === 'ko' ? '프리미엄' : 'Premium'}
               </button>
               <button
-                onClick={() => setActiveTab('share')}
+                onClick={() => setActiveTab('referral')}
                 className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors ${
-                  activeTab === 'share' 
+                  activeTab === 'referral' 
                     ? 'bg-white text-gray-900 shadow-sm' 
                     : 'text-gray-600'
                 }`}
               >
-                {getTranslation(language, 'share')}
+                {getTranslation(language, 'referral')}
               </button>
               <button
                 onClick={() => setActiveTab('account')}
@@ -1193,117 +1142,105 @@ export default function SettingsModal({ isOpen, onClose, initialTab = 'integrati
               </div>
             )}
 
-            {activeTab === 'share' && (
+            {activeTab === 'referral' && (
               <div>
-                <h2 className="text-lg md:text-xl font-semibold text-gray-900 mb-2">{getTranslation(language, 'share')}</h2>
-                <p className="text-xs md:text-sm text-gray-500 mb-4 md:mb-8">{getTranslation(language, 'shareDesc')}</p>
+                <h2 className="text-lg md:text-xl font-semibold text-gray-900 mb-2">{getTranslation(language, 'referral')}</h2>
+                <p className="text-xs md:text-sm text-gray-500 mb-4 md:mb-8">{getTranslation(language, 'referralDesc')}</p>
 
-                {/* 공유 성공/실패 메시지 */}
-                {shareMessage && (
+                {/* 복사 성공 메시지 */}
+                {referralMessage && (
                   <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-xl text-sm text-green-700 flex items-center gap-2">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
                     </svg>
-                    {shareMessage}
+                    {referralMessage}
                   </div>
                 )}
 
-                <div className="space-y-3 md:space-y-4">
-                  {/* 네이버 블로그 공유 */}
-                  <div className="border border-gray-200 rounded-xl p-3 md:p-4">
-                    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-                      <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 md:w-10 md:h-10 rounded-lg bg-[#03C75A] flex items-center justify-center flex-shrink-0">
-                          <span className="text-white font-bold text-sm">N</span>
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <h3 className="font-medium text-gray-900 text-sm md:text-base">{getTranslation(language, 'shareWithNaver')}</h3>
-                          <p className="text-xs text-gray-500 truncate">
-                            {getTranslation(language, 'shareWithNaverDesc')}
-                          </p>
-                        </div>
-                      </div>
-                      <button
-                        onClick={handleShareNaver}
-                        className="px-3 md:px-4 py-1.5 md:py-2 rounded-lg text-xs md:text-sm font-medium transition-colors bg-[#03C75A] text-white hover:bg-[#02B350] ml-12 md:ml-0"
-                      >
-                        {getTranslation(language, 'share')}
-                      </button>
-                    </div>
+                {loadingReferral ? (
+                  <div className="flex items-center justify-center py-12">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
                   </div>
-
-                  {/* 인스타그램 공유 */}
-                  <div className="border border-gray-200 rounded-xl p-3 md:p-4">
-                    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-                      <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 md:w-10 md:h-10 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: 'linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%)' }}>
-                          <svg viewBox="0 0 24 24" className="w-5 h-5 md:w-6 md:h-6 text-white" fill="currentColor">
-                            <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+                ) : (
+                  <div className="space-y-3 md:space-y-4">
+                    {/* 나의 초대 코드 */}
+                    <div className="border border-gray-200 rounded-xl p-4 md:p-5 bg-gradient-to-br from-[var(--color-primary)]/5 to-[var(--color-primary)]/10">
+                      <div className="flex items-center gap-3 mb-4">
+                        <div className="w-10 h-10 rounded-xl bg-[var(--color-primary)] flex items-center justify-center flex-shrink-0">
+                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5 text-white">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M21 11.25v8.25a1.5 1.5 0 01-1.5 1.5H5.25a1.5 1.5 0 01-1.5-1.5v-8.25M12 4.875A2.625 2.625 0 109.375 7.5H12m0-2.625V7.5m0-2.625A2.625 2.625 0 1114.625 7.5H12m0 0V21m-8.625-9.75h18c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125h-18c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" />
                           </svg>
                         </div>
-                        <div className="min-w-0 flex-1">
-                          <h3 className="font-medium text-gray-900 text-sm md:text-base">{getTranslation(language, 'shareWithInstagram')}</h3>
-                          <p className="text-xs text-gray-500 truncate">
-                            {getTranslation(language, 'shareWithInstagramDesc')}
+                        <div>
+                          <h3 className="font-semibold text-gray-900 text-sm md:text-base">{getTranslation(language, 'myReferralCode')}</h3>
+                          <p className="text-xs text-gray-500">
+                            {language === 'ko' ? '친구에게 이 코드를 공유하세요' : 'Share this code with friends'}
                           </p>
                         </div>
                       </div>
-                      <button
-                        onClick={handleShareInstagram}
-                        className="px-3 md:px-4 py-1.5 md:py-2 rounded-lg text-xs md:text-sm font-medium transition-colors text-white hover:opacity-90 ml-12 md:ml-0"
-                        style={{ background: 'linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%)' }}
-                      >
-                        {language === 'ko' ? '복사하기' : 'Copy'}
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* 카카오톡 공유 */}
-                  <div className="border border-gray-200 rounded-xl p-3 md:p-4">
-                    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                      
                       <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 md:w-10 md:h-10 rounded-lg bg-[#FEE500] flex items-center justify-center flex-shrink-0">
-                          <svg viewBox="0 0 24 24" className="w-5 h-5 md:w-6 md:h-6" fill="#3C1E1E">
-                            <path d="M12 3c-5.52 0-10 3.59-10 8.03 0 2.77 1.81 5.21 4.55 6.62-.2.74-.73 2.68-.84 3.1-.13.52.19.51.41.37.17-.11 2.72-1.85 3.83-2.6.66.09 1.35.14 2.05.14 5.52 0 10-3.59 10-8.03S17.52 3 12 3z"/>
+                        <div className="flex-1 px-4 py-3 bg-white rounded-lg border-2 border-dashed border-[var(--color-primary)]/30 text-center">
+                          <span className="text-lg md:text-xl font-mono font-bold text-[var(--color-primary)] tracking-wider">
+                            {referralCode || '---'}
+                          </span>
+                        </div>
+                        <button
+                          onClick={handleCopyReferralCode}
+                          disabled={!referralCode}
+                          className="px-4 py-3 bg-[var(--color-primary)] text-white rounded-lg font-medium hover:bg-[var(--color-primary-hover)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M15.666 3.888A2.25 2.25 0 0013.5 2.25h-3c-1.03 0-1.9.693-2.166 1.638m7.332 0c.055.194.084.4.084.612v0a.75.75 0 01-.75.75H9a.75.75 0 01-.75-.75v0c0-.212.03-.418.084-.612m7.332 0c.646.049 1.288.11 1.927.184 1.1.128 1.907 1.077 1.907 2.185V19.5a2.25 2.25 0 01-2.25 2.25H6.75A2.25 2.25 0 014.5 19.5V6.257c0-1.108.806-2.057 1.907-2.185a48.208 48.208 0 011.927-.184" />
+                          </svg>
+                          <span className="hidden md:inline">{getTranslation(language, 'copyCode')}</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* 초대 현황 */}
+                    <div className="border border-gray-200 rounded-xl p-4 md:p-5">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-xl bg-[#f5f0e8] flex items-center justify-center flex-shrink-0">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5 text-[var(--color-primary)]">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
+                            </svg>
+                          </div>
+                          <div>
+                            <h3 className="font-medium text-gray-900 text-sm md:text-base">{getTranslation(language, 'referralCount')}</h3>
+                            <p className="text-xs text-gray-500">
+                              {language === 'ko' ? '내 코드로 가입한 친구' : 'Friends who signed up with my code'}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <span className="text-2xl md:text-3xl font-bold text-[var(--color-primary)]">{referralCount}</span>
+                          <span className="text-sm text-gray-500 ml-1">{getTranslation(language, 'referralCountUnit')}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* 혜택 안내 */}
+                    <div className="bg-[#faf8f3] border border-gray-200 rounded-xl p-4 md:p-5">
+                      <div className="flex items-start gap-3">
+                        <div className="flex-shrink-0 mt-0.5">
+                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 text-[var(--color-primary)]">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456zM16.894 20.567L16.5 21.75l-.394-1.183a2.25 2.25 0 00-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 001.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 001.423 1.423l1.183.394-1.183.394a2.25 2.25 0 00-1.423 1.423z" />
                           </svg>
                         </div>
-                        <div className="min-w-0 flex-1">
-                          <h3 className="font-medium text-gray-900 text-sm md:text-base">{getTranslation(language, 'shareWithKakao')}</h3>
-                          <p className="text-xs text-gray-500 truncate">
-                            {getTranslation(language, 'shareWithKakaoDesc')}
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-medium text-gray-900 mb-1.5 text-sm md:text-base">
+                            {getTranslation(language, 'referralBenefit')}
+                          </h3>
+                          <p className="text-xs text-gray-600 leading-relaxed">
+                            {getTranslation(language, 'referralBenefitDesc')}
                           </p>
                         </div>
                       </div>
-                      <button
-                        onClick={handleShareKakao}
-                        className="px-3 md:px-4 py-1.5 md:py-2 rounded-lg text-xs md:text-sm font-medium transition-colors bg-[#FEE500] text-[#3C1E1E] hover:bg-[#F5DC00] ml-12 md:ml-0"
-                      >
-                        {getTranslation(language, 'share')}
-                      </button>
                     </div>
                   </div>
-
-                  {/* 사용 안내 */}
-                  <div className="bg-gray-50 border border-gray-200 rounded-xl p-3 md:p-4 mt-4">
-                    <div className="flex items-start gap-3">
-                      <div className="flex-shrink-0 mt-0.5">
-                        <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
-                        </svg>
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-medium text-gray-900 mb-1.5 text-sm md:text-base">
-                          {language === 'ko' ? '공유 안내' : 'Sharing Guide'}
-                        </h3>
-                        <p className="text-xs text-gray-600 leading-relaxed">
-                          {language === 'ko'
-                            ? '완료되지 않은 할 일 목록이 공유됩니다. 인스타그램의 경우 텍스트가 클립보드에 복사되며, 스토리에 붙여넣기하여 사용할 수 있습니다.'
-                            : 'Your incomplete todo list will be shared. For Instagram, the text will be copied to your clipboard, which you can paste into your story.'}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                )}
               </div>
             )}
 

@@ -510,12 +510,37 @@ export default function TodoMain({
 
             if (res.ok) {
                 const { todo } = await res.json();
-                // 3. 임시 ID를 실제 ID로 교체
-                setTodos(prev => prev.map(t => 
-                    t.id === tempId ? { ...todo, order: t.order } : t
-                ));
+                // 3. 임시 ID를 실제 ID로 교체 (사용자가 입력한 title/dueDate 유지)
+                let pendingSync: { id: string; title: string; dueDate?: string } | null = null;
+                
+                setTodos(prev => {
+                    const tempTodo = prev.find(t => t.id === tempId);
+                    // 사용자가 이미 제목을 입력했다면 백엔드 동기화 필요
+                    if (tempTodo && tempTodo.title) {
+                        pendingSync = {
+                            id: todo.id,
+                            title: tempTodo.title,
+                            dueDate: tempTodo.dueDate,
+                        };
+                    }
+                    return prev.map(t => 
+                        t.id === tempId 
+                            ? { ...todo, order: t.order, title: t.title || todo.title, dueDate: t.dueDate || todo.dueDate } 
+                            : t
+                    );
+                });
+                
                 // 편집 중인 ID도 업데이트
                 setEditingTodoId(prevId => prevId === tempId ? todo.id : prevId);
+                
+                // 사용자가 이미 제목을 입력했다면 백엔드에 PATCH로 동기화
+                if (pendingSync) {
+                    fetch('/api/todos', {
+                        method: 'PATCH',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(pendingSync),
+                    }).catch(console.error);
+                }
             } else {
                 // 4. 실패 시 롤백
                 setTodos(prev => prev.filter(t => t.id !== tempId));
