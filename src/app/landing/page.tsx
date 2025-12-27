@@ -80,10 +80,38 @@ export default function LandingPage() {
                                 <div className="w-7 h-7 md:w-8 md:h-8 rounded-full bg-gradient-to-br from-orange-400 to-orange-600 border-2 border-white"></div>
                             </div>
                             <p className="text-xs md:text-sm text-gray-500 text-center">
-                                {language === 'ko' 
-                                    ? '10000+ 건 이상의 자동화 투두 생성' 
+                                {language === 'ko'
+                                    ? '10000+ 건 이상의 자동화 투두 생성'
                                     : '10,000+ automated todos created'}
                             </p>
+                        </div>
+
+                        {/* 보안 배지 */}
+                        <div className="flex flex-wrap items-center justify-center gap-4 md:gap-6 pt-6 md:pt-8 border-t border-gray-100 mt-6 md:mt-8 max-w-2xl mx-auto">
+                            <div className="flex items-center gap-2">
+                                <svg className="w-4 h-4 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
+                                </svg>
+                                <span className="text-xs md:text-sm text-gray-600 font-medium">
+                                    {language === 'ko' ? '완전한 데이터 암호화' : 'Full data encryption'}
+                                </span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <svg className="w-4 h-4 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                                </svg>
+                                <span className="text-xs md:text-sm text-gray-600 font-medium">
+                                    {language === 'ko' ? 'AI 학습 미사용' : 'No AI training'}
+                                </span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <svg className="w-4 h-4 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1121.75 8.25z" />
+                                </svg>
+                                <span className="text-xs md:text-sm text-gray-600 font-medium">
+                                    {language === 'ko' ? '사용자 권한 제어' : 'User-controlled access'}
+                                </span>
+                            </div>
                         </div>
                     </div>
 
